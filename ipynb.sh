@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Absolute path to the ipynb venv (adjust if you move it)
-IPYNB_VENV="$HOME/ipynb"
+IPYNB_VENV="$HOME/.ipynb"
 
 # Colors
 C_RESET='\033[0m'
@@ -48,7 +48,7 @@ start_jupyter() {
         return
     fi
 
-    nohup jupyter lab --no-browser --IdentityProvider.token='' --ServerApp.token='jsanchezm2' > jupyter.log 2>&1 &
+    nohup jupyter lab --no-browser --ServerApp.token='jsanchezm2' > jupyter.log 2>&1 &
     JPID=$!
     sleep 2
 

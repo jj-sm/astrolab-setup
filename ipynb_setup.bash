@@ -16,16 +16,16 @@ uv python find 3.11
 uv python find 3.13
 uv --version
 
-echo "=== 4. ipynb virtual environment setup (using Python 3.11) ==="
-uv venv --python 3.11 ipynb
-source ipynb/bin/activate
+echo "=== 4. ipynb virtual environment setup (using Python 3.13) ==="
+uv venv --python 3.13 .ipynb
+source .ipynb/bin/activate
 
 echo "=== 5. Installing package and ipykernel into virtual environment ==="
 uv pip install ipykernel
 uv pip install "git+https://github.com/jj-sm/ipynb-jjsm-tools.git[full]"
 
 # Register virtual environment as a Jupyter kernel
-python -m ipykernel install --user --name=ipynb --display-name "Python (ipynb venv)"
+python -m ipykernel install --user --name=ipynb --display-name "Python (ipynb 3.13)"
 
 echo "=== 6. Packages installed in ipynb virtual environment ==="
 uv pip list
@@ -35,7 +35,7 @@ if [ ! -f "$HOME/.TinyTeX/bin/x86_64-linux/tlmgr" ] && [ ! -f "$HOME/.TinyTeX/bi
     echo "Downloading and installing TinyTeX..."
     set -o pipefail
     if ! wget -qO- "https://yihui.org/tinytex/install-unix.sh" | sh; then
-        echo "⚠ TinyTeX download/install failed."
+        echo "  TinyTeX download/install failed."
         echo "  This usually means the cluster's network blocks yihui.org."
         echo "  Ask course staff whether outbound access to that domain is allowed,"
         echo "  or whether a pre-downloaded TinyTeX bundle is provided on the cluster."
