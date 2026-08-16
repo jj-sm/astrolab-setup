@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Absolute path to the ipynb venv (adjust if you move it)
+IPYNB_VENV="$HOME/ipynb"
+
 # Colors
 C_RESET='\033[0m'
 C_BOLD='\033[1m'
@@ -27,10 +30,36 @@ show_menu() {
 
 start_jupyter() {
     echo -e "\n${C_CYAN}=== Starting Jupyter Server (Token: jsanchezm2) ===${C_RESET}"
+
+    if [ ! -f "$IPYNB_VENV/bin/activate" ]; then
+        echo -e "${C_RED}✖ Could not find venv at $IPYNB_VENV/bin/activate${C_RESET}"
+        echo -e "  Edit IPYNB_VENV at the top of this script if your venv lives elsewhere.\n"
+        read -p "Press [Enter] to return to menu..."
+        return
+    fi
+
+    # shellcheck disable=SC1091
+    source "$IPYNB_VENV/bin/activate"
+
+    if ! command -v jupyter &> /dev/null; then
+        echo -e "${C_RED}✖ 'jupyter' not found even after activating $IPYNB_VENV${C_RESET}"
+        echo -e "  Try: source $IPYNB_VENV/bin/activate && uv pip install ipykernel\n"
+        read -p "Press [Enter] to return to menu..."
+        return
+    fi
+
     nohup jupyter lab --no-browser --IdentityProvider.token='' --ServerApp.token='jsanchezm2' > jupyter.log 2>&1 &
-    sleep 1
-    echo -e "${C_GREEN}✔ Jupyter started in the background!${C_RESET}"
-    echo -e "Check option 2 for URLs and ports.\n"
+    JPID=$!
+    sleep 2
+
+    if kill -0 "$JPID" 2>/dev/null; then
+        echo -e "${C_GREEN}✔ Jupyter started in the background (PID $JPID)!${C_RESET}"
+        echo -e "Check option 2 for URLs and ports.\n"
+    else
+        echo -e "${C_RED}✖ Jupyter failed to start. Last lines of jupyter.log:${C_RESET}"
+        tail -n 15 jupyter.log
+        echo ""
+    fi
     read -p "Press [Enter] to return to menu..."
 }
 
