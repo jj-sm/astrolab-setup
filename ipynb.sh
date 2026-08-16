@@ -48,7 +48,7 @@ start_jupyter() {
         return
     fi
 
-    nohup jupyter lab --no-browser --ServerApp.token='jsanchezm2' > jupyter.log 2>&1 &
+    nohup jupyter lab --no-browser --ip=0.0.0.0 --ServerApp.allow_remote_access=True --ServerApp.token='jsanchezm2' > jupyter.log 2>&1 &
     JPID=$!
     sleep 2
 
