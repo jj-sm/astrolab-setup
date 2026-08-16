@@ -13,11 +13,11 @@ C_BLUE='\033[34m'
 show_menu() {
     clear
     echo -e "${C_BOLD}${C_PURPLE}============================================${C_RESET}"
-    echo -e "${C_BOLD}${C_CYAN}         🚀 IPYNB JUPYTER MANAGER 🚀         ${C_RESET}"
+    echo -e "${C_BOLD}${C_CYAN}           IPYNB JUPYTER MANAGER           ${C_RESET}"
     echo -e "${C_BOLD}${C_PURPLE}============================================${C_RESET}"
     echo -e "${C_GREEN} 1)${C_RESET} Start Jupyter Server (Detached & Custom Token)"
     echo -e "${C_GREEN} 2)${C_RESET} View Active Instances (URLs & Ports)"
-    echo -e("${C_YELLOW} 3)${C_RESET} View Jupyter Logs"
+    echo -e "${C_YELLOW} 3)${C_RESET} View Jupyter Logs"
     echo -e "${C_RED} 4)${C_RESET} Stop a Specific Jupyter Instance"
     echo -e "${C_RED} 5)${C_RESET} Stop & Clear ALL Jupyter Instances"
     echo -e "${C_BLUE} 6)${C_RESET} Exit"
@@ -38,7 +38,7 @@ view_instances() {
     echo -e "\n${C_CYAN}=== Active Jupyter Instances ===${C_RESET}"
     # Find running jupyter lab processes owned by current user
     PIDS=$(pgrep -u "$USER" -f "jupyter-lab")
-    
+
     if [ -z "$PIDS" ]; then
         echo -e "${C_YELLOW}No active Jupyter instances found.${C_RESET}\n"
     else
