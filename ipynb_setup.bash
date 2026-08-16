@@ -97,4 +97,6 @@ for PROFILE in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do
     fi
 done
 
+touch ~/.root_ident
+
 echo "=== Done! Run 'source ~/.bashrc' or restart your terminal to start using 'ipynb' and 'tfold'. ==="
