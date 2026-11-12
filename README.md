@@ -87,6 +87,7 @@ It refuses to start if no token is found, since Jupyter with an empty token has 
 
 ### Tools
 At the top of `astroenvs.sh`:
+- `JUPYTER_ROOT` - folder Jupyter opens in (default `~`, wherever the manager is run from)
 - `CARTA_BIN`, `DS9_BIN`, `CASA_BIN` - executables (default: found in `PATH`; can also be set with `export`)
 - `CARTA_TOP` - top-level folder the CARTA file browser can reach (default `/`)
 - `DATA_DIRS` - folders offered as the starting point for CARTA, DS9 and CASA

@@ -2,6 +2,8 @@
 
 # Absolute path to the ipynb venv (adjust if you move it)
 IPYNB_VENV="$HOME/.ipynb"
+# Folder Jupyter opens in (and notebooks' working directory), regardless of where the manager runs
+JUPYTER_ROOT="$HOME"
 
 # Executables (override with e.g.: export CARTA_BIN=/path/to/carta)
 CARTA_BIN="${CARTA_BIN:-$(command -v carta)}"
@@ -181,7 +183,8 @@ start_jupyter() {
         return
     fi
 
-    nohup jupyter lab --no-browser --ip=0.0.0.0 --ServerApp.allow_remote_access=True --ServerApp.token="$TOKEN" > "$JUPYTER_LOG" 2>&1 &
+    nohup jupyter lab --no-browser --ip=0.0.0.0 --ServerApp.allow_remote_access=True --ServerApp.token="$TOKEN" \
+        --ServerApp.root_dir="$JUPYTER_ROOT" > "$JUPYTER_LOG" 2>&1 &
     JPID=$!
     sleep 2
 
