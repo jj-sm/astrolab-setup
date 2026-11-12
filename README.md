@@ -38,14 +38,18 @@ Main setup script that:
 8. Registers the virtual environment as a Jupyter kernel
 9. Sets up shell alias for easy access
 
-### `ipynb.sh`
-Interactive menu-driven Jupyter Lab manager with options:
-- **Start Jupyter Server** - Launch Jupyter Lab with custom token in detached mode
-- **View Active Instances** - List running Jupyter servers with URLs and ports
-- **View Jupyter Logs** - Display Jupyter server logs
-- **Stop a Specific Instance** - Terminate a selected Jupyter server
-- **Stop & Clear ALL Instances** - Stop all running Jupyter processes
+### `astroenvs.sh`
+Interactive menu-driven manager for Jupyter Lab, CARTA, DS9 and CASA (installed as `~/.astroenvs.sh`, aliases `astroenvs` and `ipynb`):
+- **Start Jupyter / CARTA Server** - Launch in detached mode with the token from `.env` (CARTA picks the next free port from 3002)
+- **View Active Instances** - List running servers with URLs and ports
+- **View Logs** - Display Jupyter or CARTA server logs
+- **Open DS9** - Open a detached DS9 window, optionally with a FITS file (needs X11 forwarding)
+- **Start CASA** - Run CASA in the current terminal; without X11 it starts with `--nologger --nogui`
+- **Stop a Specific Instance** - Terminate a selected Jupyter, CARTA or DS9 instance
+- **Stop & Clear ALL Instances** - Stop all Jupyter, all CARTA, all DS9, or everything
 - **Exit** - Close the manager
+
+CARTA, DS9 and CASA first ask which folder to start in (`/data`, `~/UC-AST221-Rsync`, or a custom path).
 
 ## Quick Start
 
@@ -61,23 +65,38 @@ chmod +x ipynb_setup.bash
 ./ipynb_setup.bash
 ```
 
-### 3. Run Jupyter manager
+### 3. Run the manager
 ```bash
-chmod +x ipynb.sh
-./ipynb.sh
+chmod +x astroenvs.sh
+./astroenvs.sh
 ```
 
 ## Configuration
 
-### Jupyter Token
-The Jupyter Lab server uses a fixed token for authentication:
-- **Token**: `jsanchezm2`
-- Set in the `start_jupyter()` function in `ipynb.sh`
-
-To customize the token, edit the `ipynb.sh` file and modify:
+### Token
+Jupyter Lab and CARTA share one token, read from `TOKEN` in a `.env` file (see `.env.example`):
 ```bash
-nohup jupyter lab --no-browser --IdentityProvider.token='' --ServerApp.token='jsanchezm2' > jupyter.log 2>&1 &
+cp .env.example .env   # then set TOKEN=<something random>
 ```
+`ipynb_setup.bash` copies `.env` to `~/.astroenvs.env` (mode 600). The manager looks for the token in, in order:
+1. the file named by `$ASTROENVS_ENV`
+2. `~/.astroenvs.env`
+3. `.env` next to the script
+
+It refuses to start if no token is found, since Jupyter with an empty token has no authentication. `.env` is git-ignored; never commit it.
+
+### Tools
+At the top of `astroenvs.sh`:
+- `CARTA_BIN`, `DS9_BIN`, `CASA_BIN` - executables (default: found in `PATH`; can also be set with `export`)
+- `CARTA_TOP` - top-level folder the CARTA file browser can reach (default `/`)
+- `DATA_DIRS` - folders offered as the starting point for CARTA, DS9 and CASA
+
+### DS9 and CASA windows (X11)
+DS9 and the CASA logger/viewers are desktop windows, so the SSH session running the manager needs X11 forwarding. On a Mac, install [XQuartz](https://www.xquartz.org) and connect with:
+```bash
+ssh -Y <user>@10.254.0.10
+```
+Without it, DS9 won't open and CASA starts in terminal-only mode.
 
 ### Virtual Environment
 The setup creates a virtual environment named `ipynb/` in the project root. To activate it manually:
@@ -95,8 +114,9 @@ source ipynb/bin/activate
 
 ## Logs
 
-- Jupyter server logs are saved to `jupyter.log` in the project directory
-- Use option 3 in the Jupyter manager menu to view logs in real-time
+- Logs are saved to `~/.astrolab/logs/` (`jupyter.log`, `carta-<port>.log` per CARTA instance, `ds9-<pid>.log` per DS9 window)
+- CASA writes its own `casa-*.log` files in the folder it was started in
+- Use options 3 (Jupyter) and 6 (CARTA) in the manager menu to view them
 
 ## Troubleshooting
 
@@ -115,7 +135,7 @@ uv --version
 ```
 
 ### Jupyter fails to start
-Check the `jupyter.log` file for error details. Ensure port 8888 (default) is not in use.
+Check `~/.astrolab/logs/jupyter.log` for error details. Ensure port 8888 (default) is not in use.
 
 ### Virtual environment activation fails
 Manually create it:

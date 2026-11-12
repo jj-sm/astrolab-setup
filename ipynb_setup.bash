@@ -58,12 +58,23 @@ fi
 
 echo "=== 9. Copying manager scripts and setting up aliases ==="
 # Copy manager scripts from repo folder to home root if they exist
-if [ -f "ipynb.sh" ]; then
-    cp ipynb.sh ~/.ipynb.sh
-    chmod +x ~/.ipynb.sh
-elif [ -f "astrolab-setup/ipynb.sh" ]; then
-    cp astrolab-setup/ipynb.sh ~/.ipynb.sh
-    chmod +x ~/.ipynb.sh
+if [ -f "astroenvs.sh" ]; then
+    cp astroenvs.sh ~/.astroenvs.sh
+    chmod +x ~/.astroenvs.sh
+elif [ -f "astrolab-setup/astroenvs.sh" ]; then
+    cp astrolab-setup/astroenvs.sh ~/.astroenvs.sh
+    chmod +x ~/.astroenvs.sh
+fi
+
+# The manager reads TOKEN from ~/.astroenvs.env (private: it grants access to your servers)
+if [ -f ".env" ]; then
+    cp .env ~/.astroenvs.env
+    chmod 600 ~/.astroenvs.env
+elif [ -f "astrolab-setup/.env" ]; then
+    cp astrolab-setup/.env ~/.astroenvs.env
+    chmod 600 ~/.astroenvs.env
+else
+    echo "⚠ No .env found: create ~/.astroenvs.env with TOKEN=<your-token> before running astroenvs"
 fi
 
 if [ -f "folder.bash" ]; then
@@ -85,11 +96,12 @@ for PROFILE in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do
         echo 'export PATH="$HOME/.TinyTeX/bin/x86_64-linux:$HOME/.TinyTeX/bin/linux:$PATH"' >> "$PROFILE"
     fi
     
-    # Add Aliases if missing
-    if ! grep -q "alias ipynb=" "$PROFILE"; then
+    # Add Aliases if missing (ipynb is kept and repointed, overriding any older ~/.ipynb.sh alias)
+    if ! grep -q "alias astroenvs=" "$PROFILE"; then
         echo "" >> "$PROFILE"
-        echo "# IPYNB & Folder Manager Aliases" >> "$PROFILE"
-        echo 'alias ipynb="bash ~/.ipynb.sh"' >> "$PROFILE"
+        echo "# Astroenvs (Jupyter + CARTA) & Folder Manager Aliases" >> "$PROFILE"
+        echo 'alias astroenvs="bash ~/.astroenvs.sh"' >> "$PROFILE"
+        echo 'alias ipynb="bash ~/.astroenvs.sh"' >> "$PROFILE"
         echo 'alias tfold="bash ~/.folder.sh"' >> "$PROFILE"
         echo "✔ Added aliases to $PROFILE"
     else
@@ -99,4 +111,4 @@ done
 
 touch ~/.root_ident
 
-echo "=== Done! Run 'source ~/.bashrc' or restart your terminal to start using 'ipynb' and 'tfold'. ==="
+echo "=== Done! Run 'source ~/.bashrc' or restart your terminal to start using 'astroenvs' (or 'ipynb') and 'tfold'. ==="
