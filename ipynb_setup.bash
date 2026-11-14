@@ -56,14 +56,33 @@ else
     echo "tlmgr install latex-bin fancyhdr geometry graphics amsmath cm-super dvipng"
 fi
 
-echo "=== 9. Copying manager scripts and setting up aliases ==="
-# Copy manager scripts from repo folder to home root if they exist
-if [ -f "astroenvs.sh" ]; then
-    cp astroenvs.sh ~/.astroenvs.sh
-    chmod +x ~/.astroenvs.sh
-elif [ -f "astrolab-setup/astroenvs.sh" ]; then
-    cp astrolab-setup/astroenvs.sh ~/.astroenvs.sh
-    chmod +x ~/.astroenvs.sh
+echo "=== 9. Installing the astroenvs manager and setting up aliases ==="
+# The manager is a Go binary published as a GitHub Release (see .github/workflows/build.yml)
+ASTROENVS_OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+case "$(uname -m)" in
+    x86_64|amd64) ASTROENVS_ARCH=amd64 ;;
+    aarch64|arm64) ASTROENVS_ARCH=arm64 ;;
+    *) ASTROENVS_ARCH=$(uname -m) ;;
+esac
+ASTROENVS_URL="https://github.com/jj-sm/astrolab-setup/releases/latest/download/astroenvs-$ASTROENVS_OS-$ASTROENVS_ARCH"
+mkdir -p ~/.local/bin
+if curl -fsSL "$ASTROENVS_URL" -o ~/.local/bin/astroenvs.tmp; then
+    chmod +x ~/.local/bin/astroenvs.tmp
+    mv ~/.local/bin/astroenvs.tmp ~/.local/bin/astroenvs
+    ASTROENVS_CMD="$HOME/.local/bin/astroenvs"
+    echo "✔ Installed $(~/.local/bin/astroenvs --version) to ~/.local/bin/astroenvs"
+else
+    # Fall back to the bash version of the manager (e.g. if GitHub is blocked)
+    rm -f ~/.local/bin/astroenvs.tmp
+    echo "⚠ Could not download $ASTROENVS_URL; installing the bash manager instead"
+    if [ -f "astroenvs.sh" ]; then
+        cp astroenvs.sh ~/.astroenvs.sh
+        chmod +x ~/.astroenvs.sh
+    elif [ -f "astrolab-setup/astroenvs.sh" ]; then
+        cp astrolab-setup/astroenvs.sh ~/.astroenvs.sh
+        chmod +x ~/.astroenvs.sh
+    fi
+    ASTROENVS_CMD="bash ~/.astroenvs.sh"
 fi
 
 # The manager reads TOKEN from ~/.astroenvs.env (private: it grants access to your servers)
@@ -96,17 +115,19 @@ for PROFILE in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do
         echo 'export PATH="$HOME/.TinyTeX/bin/x86_64-linux:$HOME/.TinyTeX/bin/linux:$PATH"' >> "$PROFILE"
     fi
     
-    # Add Aliases if missing (ipynb is kept and repointed, overriding any older ~/.ipynb.sh alias)
-    if ! grep -q "alias astroenvs=" "$PROFILE"; then
-        echo "" >> "$PROFILE"
-        echo "# Astroenvs (Jupyter + CARTA) & Folder Manager Aliases" >> "$PROFILE"
-        echo 'alias astroenvs="bash ~/.astroenvs.sh"' >> "$PROFILE"
-        echo 'alias ipynb="bash ~/.astroenvs.sh"' >> "$PROFILE"
-        echo 'alias tfold="bash ~/.folder.sh"' >> "$PROFILE"
-        echo "✔ Added aliases to $PROFILE"
-    else
-        echo "✔ Aliases already present in $PROFILE"
-    fi
+    # Aliases are rewritten every run, so they follow the installed manager (binary or bash fallback).
+    # ipynb is kept and repointed, overriding any older ~/.ipynb.sh alias
+    grep -v -E '^(# Astroenvs \(Jupyter \+ CARTA\) & Folder Manager Aliases$|alias (astroenvs|ipynb|tfold)=)' \
+        "$PROFILE" > "$PROFILE.astroenvs-tmp" || true
+    cat "$PROFILE.astroenvs-tmp" > "$PROFILE"
+    rm -f "$PROFILE.astroenvs-tmp"
+    {
+        echo "# Astroenvs (Jupyter + CARTA) & Folder Manager Aliases"
+        echo "alias astroenvs=\"$ASTROENVS_CMD\""
+        echo "alias ipynb=\"$ASTROENVS_CMD\""
+        echo 'alias tfold="bash ~/.folder.sh"'
+    } >> "$PROFILE"
+    echo "✔ Aliases point to $ASTROENVS_CMD in $PROFILE"
 done
 
 touch ~/.root_ident

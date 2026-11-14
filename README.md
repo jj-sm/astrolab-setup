@@ -38,18 +38,19 @@ Main setup script that:
 8. Registers the virtual environment as a Jupyter kernel
 9. Sets up shell alias for easy access
 
-### `astroenvs.sh`
-Interactive menu-driven manager for Jupyter Lab, CARTA, DS9 and CASA (installed as `~/.astroenvs.sh`, aliases `astroenvs` and `ipynb`):
-- **Start Jupyter / CARTA Server** - Launch in detached mode with the token from `.env` (CARTA picks the next free port from 3002)
-- **View Active Instances** - List running servers with URLs and ports
-- **View Logs** - Display Jupyter or CARTA server logs
-- **Open DS9** - Open a detached DS9 window, optionally with a FITS file (needs X11 forwarding)
+### `astroenvs` (Go, in `cmd/astroenvs/`)
+Interactive manager for Jupyter Lab, CARTA, DS9 and CASA (installed as `~/.local/bin/astroenvs`, aliases `astroenvs` and `ipynb`). Every prompt is a selector: move with ↑/↓, confirm with Enter, go back with Esc.
+- **Start Jupyter / CARTA Server** - Launch in the background with the default token from `.env` or one you type (Jupyter picks the next free port from 8888, CARTA from 3002)
+- **Active Instances** - List running servers with their URLs and folders
+- **Logs** - Pick a Jupyter or CARTA log and show its last lines
+- **Open DS9** - Open a detached DS9 window, optionally with a FITS file picked from the folder (needs X11 forwarding)
 - **Start CASA** - Run CASA in the current terminal; without X11 it starts with `--nologger --nogui`
-- **Stop a Specific Instance** - Terminate a selected Jupyter, CARTA or DS9 instance
-- **Stop & Clear ALL Instances** - Stop all Jupyter, all CARTA, all DS9, or everything
-- **Exit** - Close the manager
+- **Stop an instance** - Pick a running Jupyter, CARTA or DS9 instance to stop
+- **Stop all instances** - Stop all Jupyter, all CARTA, all DS9, or everything
 
-CARTA, DS9 and CASA first ask which folder to start in (`/data`, `~/UC-AST221-Rsync`, or a custom path).
+Every tool first asks which folder to start in: Jupyter offers `JUPYTER_ROOT` (your home) first, then `DATA_DIRS`, or a custom path with Tab completion. For Jupyter that folder is also the top of its file browser.
+
+`astroenvs.sh` is the previous bash version. `ipynb_setup.bash` installs it only if the binary can't be downloaded.
 
 ## Quick Start
 
@@ -67,30 +68,43 @@ chmod +x ipynb_setup.bash
 
 ### 3. Run the manager
 ```bash
-chmod +x astroenvs.sh
-./astroenvs.sh
+astroenvs
 ```
+To update it later without re-running the whole setup:
+```bash
+curl -fsSL https://github.com/jj-sm/astrolab-setup/releases/latest/download/astroenvs-linux-amd64 -o ~/.local/bin/astroenvs && chmod +x ~/.local/bin/astroenvs
+```
+
+### Building and releasing
+`.github/workflows/build.yml` builds static binaries (`linux/amd64`, `linux/arm64`, `darwin/amd64`, `darwin/arm64`) on every push and pull request; they are attached to the workflow run as artifacts. Pushing a version tag also publishes them as a GitHub Release, which is what the setup script and the update command download:
+```bash
+git tag v1.0.0 && git push origin v1.0.0
+```
+To build locally: `go build -o astroenvs ./cmd/astroenvs` (Go 1.24+).
 
 ## Configuration
 
 ### Token
-Jupyter Lab and CARTA share one token, read from `TOKEN` in a `.env` file (see `.env.example`):
+When you start Jupyter Lab or CARTA, the manager asks for a token. Press Enter to use the default, read from `TOKEN` in a `.env` file (see `.env.example`), or type another one for that instance (letters, digits and `. _ ~ -`):
 ```bash
 cp .env.example .env   # then set TOKEN=<something random>
 ```
-`ipynb_setup.bash` copies `.env` to `~/.astroenvs.env` (mode 600). The manager looks for the token in, in order:
+`ipynb_setup.bash` copies `.env` to `~/.astroenvs.env` (mode 600). The manager reads its settings from the first of these that exists:
 1. the file named by `$ASTROENVS_ENV`
 2. `~/.astroenvs.env`
-3. `.env` next to the script
+3. `.env` next to the executable
 
-It refuses to start if no token is found, since Jupyter with an empty token has no authentication. `.env` is git-ignored; never commit it.
+Without a default you have to type a token every time; an empty token is never accepted, since the server would then have no authentication. `.env` is git-ignored; never commit it.
 
-### Tools
-At the top of `astroenvs.sh`:
-- `JUPYTER_ROOT` - folder Jupyter opens in (default `~`, wherever the manager is run from)
-- `CARTA_BIN`, `DS9_BIN`, `CASA_BIN` - executables (default: found in `PATH`; can also be set with `export`)
+### Settings
+Add any of these to `~/.astroenvs.env` as `KEY=value` (or `export` them before running; the environment wins over the file, except for `TOKEN`):
+- `JUPYTER_ROOT` - default folder Jupyter opens in (default `~`)
+- `DATA_DIRS` - folders offered as the starting point for every tool, separated by `:` (default `/data:~/UC-AST221-Rsync`)
+- `IPYNB_VENV` - venv that provides `jupyter` (default `~/.ipynb`)
+- `CARTA_BIN`, `DS9_BIN`, `CASA_BIN` - executables (default: found in `PATH`; CASA falls back to `/usr/local/casa/bin/casa`)
 - `CARTA_TOP` - top-level folder the CARTA file browser can reach (default `/`)
-- `DATA_DIRS` - folders offered as the starting point for CARTA, DS9 and CASA
+- `JUPYTER_PORT_START`, `CARTA_PORT_START` - first port to try (defaults `8888`, `3002`)
+- `SERVER_IP` - address shown in the URLs (default: the first network address, like `hostname -I`)
 
 ### DS9 and CASA windows (X11)
 DS9 and the CASA logger/viewers are desktop windows, so the SSH session running the manager needs X11 forwarding. On a Mac, install [XQuartz](https://www.xquartz.org) and connect with:
@@ -115,9 +129,10 @@ source ipynb/bin/activate
 
 ## Logs
 
-- Logs are saved to `~/.astrolab/logs/` (`jupyter.log`, `carta-<port>.log` per CARTA instance, `ds9-<pid>.log` per DS9 window)
+- Logs are saved to `~/.astrolab/logs/` (`jupyter-<port>.log` and `carta-<port>.log` per server, `ds9-<pid>.log` per DS9 window)
+- Running instances are tracked in `~/.astrolab/run/`
 - CASA writes its own `casa-*.log` files in the folder it was started in
-- Use options 3 (Jupyter) and 6 (CARTA) in the manager menu to view them
+- Use **Jupyter · Logs** and **CARTA · Logs** in the manager to view them
 
 ## Troubleshooting
 
@@ -136,7 +151,7 @@ uv --version
 ```
 
 ### Jupyter fails to start
-Check `~/.astrolab/logs/jupyter.log` for error details. Ensure port 8888 (default) is not in use.
+The manager shows the end of the log when a server fails; the full log is `~/.astrolab/logs/jupyter-<port>.log`.
 
 ### Virtual environment activation fails
 Manually create it:

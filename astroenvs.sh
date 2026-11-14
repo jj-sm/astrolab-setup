@@ -2,7 +2,7 @@
 
 # Absolute path to the ipynb venv (adjust if you move it)
 IPYNB_VENV="$HOME/.ipynb"
-# Folder Jupyter opens in (and notebooks' working directory), regardless of where the manager runs
+# Default folder Jupyter opens in (and notebooks' working directory); another can be picked at start
 JUPYTER_ROOT="$HOME"
 
 # Executables (override with e.g.: export CARTA_BIN=/path/to/carta)
@@ -14,7 +14,7 @@ CASA_BIN="${CASA_BIN:-$(command -v casa || echo /usr/local/casa/bin/casa)}"
 CARTA_TOP="/"
 # First CARTA port to try; the next free one is used (the host is shared)
 CARTA_PORT_START=3002
-# Folders offered as the starting point for CARTA, DS9 and CASA
+# Folders offered as the starting point for Jupyter, CARTA, DS9 and CASA
 DATA_DIRS=(
     "/data"
     "$HOME/UC-AST221-Rsync"
@@ -40,7 +40,7 @@ C_RED='\033[31m'
 C_PURPLE='\033[35m'
 C_BLUE='\033[34m'
 
-# TOKEN (shared by Jupyter and CARTA) comes from the first .env file found
+# Default TOKEN for Jupyter and CARTA comes from the first .env file found; another can be typed at start
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 for ENV_FILE in "$ASTROENVS_ENV" "$HOME/.astroenvs.env" "$SCRIPT_DIR/.env"; do
     [ -n "$ENV_FILE" ] && [ -f "$ENV_FILE" ] && break
@@ -51,11 +51,9 @@ if [ -n "$ENV_FILE" ]; then
     TOKEN=$(grep -E '^[[:space:]]*(export[[:space:]]+)?TOKEN=' "$ENV_FILE" | tail -n 1 | cut -d= -f2- | tr -d "\"' \r\t")
 fi
 if [ -z "$TOKEN" ]; then
-    echo -e "${C_RED}✖ No TOKEN found.${C_RESET} Add a line TOKEN=<your-token> to one of:"
-    echo -e "  ~/.astroenvs.env  (created by ipynb_setup.bash from the repo's .env)"
-    echo -e "  $SCRIPT_DIR/.env"
-    echo -e "  or point ASTROENVS_ENV at another file."
-    exit 1
+    echo -e "${C_YELLOW}No default TOKEN found${C_RESET}, so you'll type one each time you start Jupyter or CARTA."
+    echo -e "  To set a default, add a line TOKEN=<your-token> to ~/.astroenvs.env, $SCRIPT_DIR/.env,"
+    echo -e "  or the file named by ASTROENVS_ENV.\n"
 fi
 
 pause() {
@@ -92,23 +90,27 @@ stop_tracked_pid() {
     kill -TERM -- "-$1" 2>/dev/null || kill -TERM "$1" 2>/dev/null
 }
 
-# Asks for a starting folder and sets PICKED_DIR; returns 1 if the choice is invalid
+# Asks for a starting folder and sets PICKED_DIR; returns 1 if the choice is invalid.
+# Folders passed as arguments are listed before DATA_DIRS, so $1 becomes the default
 pick_dir() {
-    local i pick
+    local i pick dirs=("$@" "${DATA_DIRS[@]}")
     echo "Start in:"
-    for i in "${!DATA_DIRS[@]}"; do
-        echo -e "${C_GREEN} $((i + 1)))${C_RESET} ${DATA_DIRS[$i]}"
+    for i in "${!dirs[@]}"; do
+        echo -e "${C_GREEN} $((i + 1)))${C_RESET} ${dirs[$i]}"
     done
-    echo -e "${C_GREEN} c)${C_RESET} Custom path"
+    echo -e "${C_GREEN} c)${C_RESET} Custom path (or type a path directly)"
     echo -n -e "${C_BOLD}Choice [1]: ${C_RESET}"
-    read -r pick
+    read -r -e pick
     pick=${pick:-1}
 
     if [ "$pick" = "c" ]; then
         read -r -e -p "Path: " PICKED_DIR
         PICKED_DIR=${PICKED_DIR/#\~/$HOME}
-    elif [[ "$pick" =~ ^[0-9]+$ ]] && [ "$pick" -ge 1 ] && [ "$pick" -le "${#DATA_DIRS[@]}" ]; then
-        PICKED_DIR=${DATA_DIRS[$((pick - 1))]}
+    elif [[ "$pick" == */* || "$pick" == "~"* || "$pick" == "." || "$pick" == ".." ]]; then
+        # A path typed straight at the prompt is taken as a custom path
+        PICKED_DIR=${pick/#\~/$HOME}
+    elif [[ "$pick" =~ ^[0-9]+$ ]] && [ "$pick" -ge 1 ] && [ "$pick" -le "${#dirs[@]}" ]; then
+        PICKED_DIR=${dirs[$((pick - 1))]}
     else
         echo -e "${C_RED}✖ Invalid choice.${C_RESET}"
         return 1
@@ -116,6 +118,28 @@ pick_dir() {
 
     if [ ! -d "$PICKED_DIR" ]; then
         echo -e "${C_RED}✖ $PICKED_DIR is not a directory.${C_RESET}"
+        return 1
+    fi
+}
+
+# Asks for an instance's token and sets PICKED_TOKEN; Enter keeps the default TOKEN.
+# An empty token would leave the server without authentication, so one is always required
+pick_token() {
+    if [ -n "$TOKEN" ]; then
+        echo -n -e "${C_BOLD}Token [Enter = default from .env]: ${C_RESET}"
+    else
+        echo -n -e "${C_BOLD}Token (no default set): ${C_RESET}"
+    fi
+    read -r PICKED_TOKEN
+    PICKED_TOKEN=${PICKED_TOKEN:-$TOKEN}
+
+    if [ -z "$PICKED_TOKEN" ]; then
+        echo -e "${C_RED}✖ A token is required.${C_RESET}"
+        return 1
+    fi
+    # It goes into URLs (?token=...), so keep to characters that need no escaping
+    if [[ ! "$PICKED_TOKEN" =~ ^[A-Za-z0-9._~-]+$ ]]; then
+        echo -e "${C_RED}✖ Use only letters, digits and . _ ~ - in the token.${C_RESET}"
         return 1
     fi
 }
@@ -183,8 +207,11 @@ start_jupyter() {
         return
     fi
 
-    nohup jupyter lab --no-browser --ip=0.0.0.0 --ServerApp.allow_remote_access=True --ServerApp.token="$TOKEN" \
-        --ServerApp.root_dir="$JUPYTER_ROOT" > "$JUPYTER_LOG" 2>&1 &
+    pick_dir "$JUPYTER_ROOT" || { echo ""; pause; return; }
+    pick_token || { echo ""; pause; return; }
+
+    nohup jupyter lab --no-browser --ip=0.0.0.0 --ServerApp.allow_remote_access=True --ServerApp.token="$PICKED_TOKEN" \
+        --ServerApp.root_dir="$PICKED_DIR" > "$JUPYTER_LOG" 2>&1 &
     JPID=$!
     sleep 2
 
@@ -236,21 +263,22 @@ start_carta() {
     echo -e "\n${C_CYAN}=== Starting CARTA Server ===${C_RESET}"
     need_bin "$CARTA_BIN" carta CARTA_BIN || { pause; return; }
     pick_dir || { echo ""; pause; return; }
+    pick_token || { echo ""; pause; return; }
 
     local port log cpid
     port=$(free_port "$CARTA_PORT_START")
     log="$LOG_DIR/carta-$port.log"
 
-    CARTA_AUTH_TOKEN="$TOKEN" setsid nohup "$CARTA_BIN" --no_browser --port "$port" \
+    CARTA_AUTH_TOKEN="$PICKED_TOKEN" setsid nohup "$CARTA_BIN" --no_browser --port "$port" \
         --top_level_folder "$CARTA_TOP" "$PICKED_DIR" > "$log" 2>&1 < /dev/null &
     cpid=$!
     sleep 3
 
     if kill -0 "$cpid" 2>/dev/null; then
-        echo "$cpid $PICKED_DIR" > "$RUN_DIR/carta-$port"
+        echo "$cpid $PICKED_TOKEN $PICKED_DIR" > "$RUN_DIR/carta-$port"
         echo -e "${C_GREEN}✔ CARTA started in the background (PID $cpid, port $port)!${C_RESET}"
         echo -e "Open in your browser (VPN on):"
-        echo -e "  ${C_BOLD}http://$SERVER_IP:$port/?token=$TOKEN${C_RESET}\n"
+        echo -e "  ${C_BOLD}http://$SERVER_IP:$port/?token=$PICKED_TOKEN${C_RESET}\n"
     else
         echo -e "${C_RED}✖ CARTA failed to start. Last lines of $log:${C_RESET}"
         tail -n 15 "$log"
@@ -261,11 +289,11 @@ start_carta() {
 
 view_carta() {
     echo -e "\n${C_CYAN}=== Active CARTA Instances ===${C_RESET}"
-    local found=0 port pid dir
-    while read -r port pid dir; do
+    local found=0 port pid token dir
+    while read -r port pid token dir; do
         found=1
         echo -e "${C_GREEN}●${C_RESET} PID $pid  port $port  start folder: $dir"
-        echo -e "  ${C_BOLD}http://$SERVER_IP:$port/?token=$TOKEN${C_RESET}"
+        echo -e "  ${C_BOLD}http://$SERVER_IP:$port/?token=$token${C_RESET}"
     done < <(instances carta)
 
     if [ "$found" -eq 0 ]; then
@@ -351,31 +379,48 @@ start_casa() {
 # ---------------------------------------------------------------- Manage
 
 stop_instance() {
-    echo -e "\n${C_RED}=== Active Jupyter PIDs ===${C_RESET}"
-    pgrep -u "$USER" -fl "jupyter-lab"
-    local id pid info
-    echo -e "${C_RED}=== Active CARTA PIDs ===${C_RESET}"
-    while read -r id pid info; do
-        echo "$pid carta (port $id)"
+    echo -e "\n${C_RED}=== Stop an instance ===${C_RESET}"
+    local pids=() labels=() files=() id pid info token dir i pick
+
+    while read -r pid; do
+        [ -n "$pid" ] || continue
+        dir=$(ps -o args= -p "$pid" 2>/dev/null | sed -n 's/.*--ServerApp.root_dir=//p')
+        pids+=("$pid"); files+=(""); labels+=("jupyter  PID $pid  ${dir:+root: $dir}")
+    done < <(pgrep -u "$USER" -f "jupyter-lab")
+    while read -r id pid token dir; do
+        pids+=("$pid"); files+=("$RUN_DIR/carta-$id"); labels+=("carta    PID $pid  port $id  start folder: $dir")
     done < <(instances carta)
-    echo -e "${C_RED}=== Active DS9 PIDs ===${C_RESET}"
     while read -r id pid info; do
-        echo "$pid ds9 ($info)"
+        pids+=("$pid"); files+=("$RUN_DIR/ds9-$id"); labels+=("ds9      PID $pid  $info")
     done < <(instances ds9)
 
-    echo -n -e "${C_BOLD}Enter the PID to stop: ${C_RESET}"
-    read -r target_pid
-    [ -z "$target_pid" ] && return
-
-    local tracked
-    tracked=$(grep -l "^$target_pid " "$RUN_DIR"/* 2>/dev/null | head -n 1)
-    if [ -n "$tracked" ]; then
-        stop_tracked_pid "$target_pid" && rm -f "$tracked" \
-            && echo -e "${C_GREEN}✔ Stopped process $target_pid${C_RESET}" \
-            || echo -e "${C_RED}✖ Failed to stop $target_pid.${C_RESET}"
-    else
-        kill "$target_pid" 2>/dev/null && echo -e "${C_GREEN}✔ Stopped process $target_pid${C_RESET}" || echo -e "${C_RED}✖ Failed or invalid PID.${C_RESET}"
+    if [ "${#pids[@]}" -eq 0 ]; then
+        echo -e "${C_YELLOW}No active instances found.${C_RESET}\n"
+        pause
+        return
     fi
+
+    for i in "${!labels[@]}"; do
+        echo -e "${C_GREEN} $((i + 1)))${C_RESET} ${labels[$i]}"
+    done
+    echo -n -e "${C_BOLD}Instance to stop [Enter = cancel]: ${C_RESET}"
+    read -r pick
+    [ -z "$pick" ] && return
+    if [[ ! "$pick" =~ ^[0-9]+$ ]] || [ "$pick" -lt 1 ] || [ "$pick" -gt "${#pids[@]}" ]; then
+        echo -e "${C_RED}✖ Invalid choice.${C_RESET}"
+        pause
+        return
+    fi
+
+    i=$((pick - 1))
+    pid=${pids[$i]}
+    # Tracked instances (CARTA, DS9) have a run file; Jupyter is a plain process
+    if [ -n "${files[$i]}" ]; then
+        stop_tracked_pid "$pid" && rm -f "${files[$i]}"
+    else
+        kill "$pid" 2>/dev/null
+    fi && echo -e "${C_GREEN}✔ Stopped ${labels[$i]%%  *} (PID $pid)${C_RESET}" \
+       || echo -e "${C_RED}✖ Failed to stop PID $pid.${C_RESET}"
     pause
 }
 
