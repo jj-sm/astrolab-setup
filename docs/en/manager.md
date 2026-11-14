@@ -32,8 +32,10 @@ Open in your browser (VPN on):
   http://10.254.0.10:8888/lab?token=...
 ```
 
-The folder you choose is the top of Jupyter's file browser: you can't navigate
-above it there. Notebook code can still read any file your account can.
+The folder you choose is where Jupyter's file browser starts and the highest
+folder it shows. It's not a security boundary: Jupyter's terminal and notebooks
+run as your account and can reach every file you can. See
+[Sharing and security](#sharing-and-security).
 
 Each server gets the first free port from 8888 up. The server is shared, so
 someone else may already be on 8888; the manager checks and moves on.
@@ -113,6 +115,27 @@ you choose:
 
 Jupyter gets a normal shutdown signal so it can close its kernels. CARTA and DS9
 are stopped together with any processes they started.
+
+## Sharing and security
+
+A Jupyter URL with its token is as good as your password. Whoever opens it gets
+a terminal and notebooks running as you: they can read, change and delete
+anything in your account, whichever folder you started Jupyter in. A CARTA URL
+gives access to the images CARTA can open.
+
+- **Don't share Jupyter URLs**, not even for a folder like `~/shared/T5`.
+- **Use a long random token.** The servers can be reached from the whole
+  network, so a word like `Capybara` can be guessed. The manager warns about
+  tokens shorter than 16 characters. To make one:
+  `python3 -c "import secrets; print(secrets.token_urlsafe(24))"`
+- **To work on files with classmates**, each person runs their own server with
+  their own account, and the shared folder is given access through Unix groups
+  or ACLs. Ask the server's administrators to set this up.
+
+The manager keeps tokens away from other users of the server. It passes the
+token to Jupyter through the environment (command lines are visible to every
+user with `ps`), and keeps `~/.astrolab`, which holds the logs and URLs,
+readable only by you.
 
 ## Command line
 

@@ -98,10 +98,11 @@ func startJupyter(cfg *Config) {
 		// Fail instead of silently moving to another port, so the URL shown is right
 		"--ServerApp.port_retries=0",
 		"--ServerApp.allow_remote_access=True",
-		"--ServerApp.token=" + token,
 		"--ServerApp.root_dir=" + dir}
-	// Same as activating the venv, so kernels and extensions resolve from it
-	env := []string{"PATH=" + bin + ":" + os.Getenv("PATH"), "VIRTUAL_ENV=" + cfg.IpynbVenv}
+	// Same as activating the venv, so kernels and extensions resolve from it. The token goes in
+	// the environment: command lines are visible to every user on the host (ps), environments aren't
+	env := []string{"PATH=" + bin + ":" + os.Getenv("PATH"), "VIRTUAL_ENV=" + cfg.IpynbVenv,
+		"JUPYTER_TOKEN=" + token}
 
 	cmd, err := startDetached(jupyter, args, dir, env, log, 3*time.Second)
 	if err != nil {
@@ -115,6 +116,9 @@ func startJupyter(cfg *Config) {
 	ok("Jupyter started in the background (PID %d, port %d)!", in.PID, port)
 	fmt.Println("Open in your browser (VPN on):")
 	fmt.Println("  " + styleBold.Render(in.URL(cfg)))
+	// The folder only limits the file browser: terminals and notebooks run as this account
+	warn("Anyone with this URL can run commands as you, in any folder. Don't share it.")
+	warnWeakToken(token)
 	pause()
 }
 
@@ -149,6 +153,7 @@ func startCarta(cfg *Config) {
 	ok("CARTA started in the background (PID %d, port %d)!", in.PID, port)
 	fmt.Println("Open in your browser (VPN on):")
 	fmt.Println("  " + styleBold.Render(in.URL(cfg)))
+	warnWeakToken(token)
 	pause()
 }
 

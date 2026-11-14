@@ -155,7 +155,10 @@ func loadConfig() *Config {
 	c.StateDir = filepath.Join(home(), ".astrolab")
 	c.LogDir = filepath.Join(c.StateDir, "logs")
 	c.RunDir = filepath.Join(c.StateDir, "run")
-	os.MkdirAll(c.LogDir, 0o755)
-	os.MkdirAll(c.RunDir, 0o755)
+	// Private: logs and run files hold the tokens. Chmod too, for folders older versions made 755
+	for _, d := range []string{c.StateDir, c.LogDir, c.RunDir} {
+		os.MkdirAll(d, 0o700)
+		os.Chmod(d, 0o700)
+	}
 	return c
 }

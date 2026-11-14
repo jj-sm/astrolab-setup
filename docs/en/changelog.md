@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Security:** the Jupyter token is no longer on the command line, where every
+  user of the server could see it with `ps`. `~/.astrolab` and its logs, which
+  contain the URLs with tokens, are now readable only by you. Restart Jupyter
+  servers started by 1.0.1 or earlier.
+- After starting Jupyter, the manager warns that anyone with the URL can run
+  commands as you. It warns about tokens shorter than 16 characters for Jupyter
+  and CARTA.
 - One-command install: `curl -fsSL https://raw.githubusercontent.com/jj-sm/astrolab-setup/main/install.sh | bash`
   downloads the repository to a temporary folder, asks for a token, runs the
   setup and deletes the folder. It doesn't need `git`.

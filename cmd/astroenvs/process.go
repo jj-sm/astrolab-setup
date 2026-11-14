@@ -159,11 +159,13 @@ func stop(in Instance) error {
 // startDetached starts a command in its own session with output going to logPath, waits
 // `settle` and reports whether it is still running; it keeps running after the manager exits
 func startDetached(name string, args []string, dir string, env []string, logPath string, settle time.Duration) (*exec.Cmd, error) {
-	log, err := os.Create(logPath)
+	// Logs print the URL with the token, so only this account may read them
+	log, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
 	if err != nil {
 		return nil, err
 	}
 	defer log.Close()
+	log.Chmod(0o600) // O_CREATE's mode doesn't apply to a log left by an earlier run
 
 	cmd := exec.Command(name, args...)
 	cmd.Dir = dir

@@ -32,9 +32,10 @@ Open in your browser (VPN on):
   http://10.254.0.10:8888/lab?token=...
 ```
 
-La carpeta que eliges es el tope del explorador de archivos de Jupyter: desde
-ahí no puedes subir más arriba. El código de un notebook igual puede leer
-cualquier archivo al que tu cuenta tenga acceso.
+La carpeta que eliges es donde parte el explorador de archivos de Jupyter y la
+más alta que muestra. No es una barrera de seguridad: la terminal y los
+notebooks de Jupyter corren con tu cuenta y llegan a todos tus archivos. Mira
+[Compartir y seguridad](#compartir-y-seguridad).
 
 Cada servidor usa el primer puerto libre desde el 8888. El servidor es
 compartido, así que otra persona puede estar usando ya el 8888; el gestor lo
@@ -119,6 +120,29 @@ elijas:
 
 Jupyter recibe una señal de cierre normal para que pueda cerrar sus kernels.
 CARTA y DS9 se detienen junto con los procesos que hayan abierto.
+
+## Compartir y seguridad
+
+Una URL de Jupyter con su token vale lo mismo que tu contraseña. Quien la abra
+tiene una terminal y notebooks que corren como tú: puede leer, cambiar y borrar
+cualquier cosa de tu cuenta, sin importar en qué carpeta iniciaste Jupyter. Una
+URL de CARTA da acceso a las imágenes que CARTA puede abrir.
+
+- **No compartas URLs de Jupyter**, ni siquiera para una carpeta como
+  `~/shared/T5`.
+- **Usa un token largo y aleatorio.** Los servidores se pueden alcanzar desde
+  toda la red, así que una palabra como `Capybara` se puede adivinar. El gestor
+  avisa si el token tiene menos de 16 caracteres. Para generar uno:
+  `python3 -c "import secrets; print(secrets.token_urlsafe(24))"`
+- **Para trabajar en archivos con compañeros**, cada persona inicia su propio
+  servidor con su propia cuenta, y la carpeta compartida recibe acceso mediante
+  grupos de Unix o ACLs. Pide a los administradores del servidor que lo
+  configuren.
+
+El gestor mantiene los tokens fuera del alcance de otros usuarios del servidor.
+Le pasa el token a Jupyter por el entorno (cualquier usuario ve las líneas de
+comando con `ps`) y deja `~/.astrolab`, que guarda los logs y las URLs, legible
+solo para ti.
 
 ## Línea de comandos
 

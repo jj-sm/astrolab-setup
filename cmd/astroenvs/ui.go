@@ -184,6 +184,14 @@ func validToken(t string) error {
 	return nil
 }
 
+// warnWeakToken flags tokens short enough to guess: the servers listen on the whole network
+func warnWeakToken(t string) {
+	if len(t) < 16 {
+		warn("This token is short enough to guess. Use 16+ random characters, e.g. from:")
+		fmt.Println(`  python3 -c "import secrets; print(secrets.token_urlsafe(24))"`)
+	}
+}
+
 // pickToken offers the default token from the env file or a custom one
 func pickToken(cfg *Config) (string, error) {
 	if cfg.Token != "" {
