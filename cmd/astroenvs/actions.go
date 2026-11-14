@@ -87,6 +87,16 @@ func startJupyter(cfg *Config) {
 	if stopped(err) {
 		return
 	}
+	sandbox, err := pickSandbox(dir)
+	if stopped(err) {
+		return
+	}
+	if sandbox && (dir == "/" || strings.HasPrefix(home()+"/", dir+"/")) {
+		// The folder would hold ~/.bashrc and the like: changing them reaches outside the sandbox
+		fail("A sandboxed server can't use %s, since it contains your whole home folder. Pick a subfolder.", tilde(dir))
+		pause()
+		return
+	}
 	token, err := pickToken(cfg)
 	if stopped(err) {
 		return
@@ -104,22 +114,56 @@ func startJupyter(cfg *Config) {
 	env := []string{"PATH=" + bin + ":" + os.Getenv("PATH"), "VIRTUAL_ENV=" + cfg.IpynbVenv,
 		"JUPYTER_TOKEN=" + token}
 
-	cmd, err := startDetached(jupyter, args, dir, env, log, 3*time.Second)
+	var cmd *exec.Cmd
+	if sandbox {
+		cmd = sandboxCommand(dir, sandboxReadOnly(cfg), jupyter, args...)
+	} else {
+		cmd = exec.Command(jupyter, args...)
+		cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
+	}
+	cmd, err = runDetached(cmd, dir, env, log, 3*time.Second)
 	if err != nil {
 		showStartFailure(err, log)
 		pause()
 		return
 	}
 	in := Instance{Kind: "jupyter", ID: strconv.Itoa(port), PID: cmd.Process.Pid, Port: port,
-		Token: token, Dir: dir, Log: log, Started: time.Now()}
+		Token: token, Dir: dir, Log: log, Started: time.Now(), Sandbox: sandbox}
 	saveInstance(cfg, in)
 	ok("Jupyter started in the background (PID %d, port %d)!", in.PID, port)
 	fmt.Println("Open in your browser (VPN on):")
 	fmt.Println("  " + styleBold.Render(in.URL(cfg)))
-	// The folder only limits the file browser: terminals and notebooks run as this account
-	warn("Anyone with this URL can run commands as you, in any folder. Don't share it.")
+	if sandbox {
+		warn("Anyone with this URL can read, change and delete the files in %s.", tilde(dir))
+	} else {
+		// The folder only limits the file browser: terminals and notebooks run as this account
+		warn("Anyone with this URL can run commands as you, in any folder. Don't share it.")
+	}
 	warnWeakToken(token)
 	pause()
+}
+
+// sandboxReadOnly lists what a sandboxed Jupyter needs besides its folder: the venv, the
+// Python it was made from (uv keeps it in the home folder) and TinyTeX for Matplotlib's usetex
+func sandboxReadOnly(cfg *Config) []string {
+	ro := []string{cfg.IpynbVenv}
+	if py := venvPythonHome(cfg.IpynbVenv); py != "" {
+		ro = append(ro, py)
+	}
+	if tex := filepath.Join(home(), ".TinyTeX"); isDir(tex) {
+		ro = append(ro, tex)
+	}
+	return ro
+}
+
+// venvPythonHome returns the installation a venv's python links to, from pyvenv.cfg's "home"
+// (its bin folder), or "" if it can't be read
+func venvPythonHome(venv string) string {
+	vals := readEnvFile(filepath.Join(venv, "pyvenv.cfg"))
+	if bin := vals["home"]; filepath.IsAbs(bin) {
+		return filepath.Dir(bin)
+	}
+	return ""
 }
 
 func startCarta(cfg *Config) {
@@ -161,7 +205,11 @@ func viewServers(cfg *Config, kind, name string) {
 	heading("Active " + name + " Instances")
 	list := instances(cfg, kind)
 	for _, in := range list {
-		fmt.Printf("%s PID %d  port %d  folder: %s\n", styleOK.Render("●"), in.PID, in.Port, tilde(in.Dir))
+		sb := ""
+		if in.Sandbox {
+			sb = styleDim.Render("  (sandboxed)")
+		}
+		fmt.Printf("%s PID %d  port %d  folder: %s%s\n", styleOK.Render("●"), in.PID, in.Port, tilde(in.Dir), sb)
 		if in.Token != "" {
 			fmt.Println("  " + styleBold.Render(in.URL(cfg)))
 		}
@@ -360,7 +408,11 @@ func describe(in Instance) string {
 		}
 		return s
 	default:
-		return fmt.Sprintf("%-8s PID %-7d port %d  %s", in.Kind, in.PID, in.Port, tilde(in.Dir))
+		s := fmt.Sprintf("%-8s PID %-7d port %d  %s", in.Kind, in.PID, in.Port, tilde(in.Dir))
+		if in.Sandbox {
+			s += styleDim.Render("  (sandboxed)")
+		}
+		return s
 	}
 }
 

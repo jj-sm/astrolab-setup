@@ -14,6 +14,9 @@ import (
 // Set at build time with -ldflags "-X main.version=..."
 var version = "dev"
 
+// sandboxArg is the hidden first argument astroenvs restarts itself with to build a sandbox
+const sandboxArg = "__sandbox"
+
 type action struct {
 	label string
 	run   func(*Config)
@@ -46,6 +49,10 @@ func menu(cfg *Config) []action {
 }
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == sandboxArg {
+		runSandbox(os.Args[2:])
+		return
+	}
 	showVersion := flag.Bool("version", false, "print the version and exit")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: astroenvs [--version]\n\n")

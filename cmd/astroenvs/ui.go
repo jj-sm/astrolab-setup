@@ -184,6 +184,22 @@ func validToken(t string) error {
 	return nil
 }
 
+// pickSandbox asks whether a Jupyter server may reach all files or only its folder; it
+// isn't asked where the sandbox can't work
+func pickSandbox(dir string) (bool, error) {
+	if !sandboxSupported() {
+		return false, nil
+	}
+	mode := "normal"
+	err := ask(huh.NewSelect[string]().Title("Access").
+		Description("Notebooks and the terminal run as you. A sandboxed server can't see anything but its folder.").
+		Options(
+			huh.NewOption("Normal: all your files (only for you)", "normal"),
+			huh.NewOption("Sandboxed: only "+tilde(dir)+" (to share the URL)", "sandbox"),
+		).Value(&mode))
+	return mode == "sandbox", err
+}
+
 // warnWeakToken flags tokens short enough to guess: the servers listen on the whole network
 func warnWeakToken(t string) {
 	if len(t) < 16 {

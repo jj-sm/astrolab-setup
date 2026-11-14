@@ -29,6 +29,7 @@ type Instance struct {
 	Dir     string    `json:"dir"`
 	File    string    `json:"file,omitempty"` // FITS file DS9 opened
 	Log     string    `json:"log"`
+	Sandbox bool      `json:"sandbox,omitempty"` // Jupyter that only sees Dir
 	Started time.Time `json:"started"`
 
 	runFile string
@@ -117,11 +118,18 @@ func untrackedJupyter(cfg *Config) []int {
 	out, _ := exec.Command("pgrep", "-u", strconv.Itoa(os.Getuid()), "-f", "jupyter-lab").Output()
 	var pids []int
 	for _, f := range strings.Fields(string(out)) {
-		if pid, err := strconv.Atoi(f); err == nil && !tracked[pid] {
+		// A sandboxed Jupyter runs as a child of the tracked sandbox process
+		if pid, err := strconv.Atoi(f); err == nil && !tracked[pid] && !tracked[parentPID(pid)] {
 			pids = append(pids, pid)
 		}
 	}
 	return pids
+}
+
+func parentPID(pid int) int {
+	out, _ := exec.Command("ps", "-o", "ppid=", "-p", strconv.Itoa(pid)).Output()
+	ppid, _ := strconv.Atoi(strings.TrimSpace(string(out)))
+	return ppid
 }
 
 // processArg returns the value of --name=value in a process's command line, if present
@@ -159,6 +167,13 @@ func stop(in Instance) error {
 // startDetached starts a command in its own session with output going to logPath, waits
 // `settle` and reports whether it is still running; it keeps running after the manager exits
 func startDetached(name string, args []string, dir string, env []string, logPath string, settle time.Duration) (*exec.Cmd, error) {
+	cmd := exec.Command(name, args...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
+	return runDetached(cmd, dir, env, logPath, settle)
+}
+
+// runDetached is startDetached for a prepared command, whose SysProcAttr must start a new session
+func runDetached(cmd *exec.Cmd, dir string, env []string, logPath string, settle time.Duration) (*exec.Cmd, error) {
 	// Logs print the URL with the token, so only this account may read them
 	log, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
 	if err != nil {
@@ -167,12 +182,10 @@ func startDetached(name string, args []string, dir string, env []string, logPath
 	defer log.Close()
 	log.Chmod(0o600) // O_CREATE's mode doesn't apply to a log left by an earlier run
 
-	cmd := exec.Command(name, args...)
 	cmd.Dir = dir
 	cmd.Stdout = log
 	cmd.Stderr = log
 	cmd.Env = append(os.Environ(), env...)
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 	if err := cmd.Start(); err != nil {
 		return nil, err
 	}
