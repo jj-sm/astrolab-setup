@@ -32,7 +32,12 @@ jobs:
       - name: Test
         run: |
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
-          CGO_ENABLED=0 ASTROENVS_SANDBOX_TEST=1 go test -v ./...
+          # A venv made like the setup's ~/.ipynb (uv's own Python, in the home folder), for
+          # the end-to-end test of a sandboxed JupyterLab
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          UV_PYTHON_PREFERENCE=only-managed uv venv --python 3.13 ~/.ipynb
+          uv pip install --python ~/.ipynb/bin/python jupyterlab
+          CGO_ENABLED=0 ASTROENVS_SANDBOX_TEST=1 ASTROENVS_TEST_VENV=~/.ipynb go test -v ./...
 
       - name: Build
         run: |
