@@ -5,6 +5,9 @@
 - Re-running the setup reuses an existing `~/.ipynb` instead of stopping at
   uv's "already exists" prompt, and the environment is always created in your
   home folder, wherever you run the setup from.
+- The setup finds `.env` and `folder.bash` next to the script, so running it
+  from any folder copies your token to `~/.astroenvs.env`. It warns when that
+  file has no `TOKEN`.
 
 ## 1.0.1 (2026-11-14)
 

@@ -5,6 +5,9 @@
 - Volver a ejecutar la instalación reutiliza un `~/.ipynb` existente en vez de
   detenerse en la pregunta "already exists" de uv, y el entorno siempre se crea
   en tu carpeta personal, desde donde sea que ejecutes la instalación.
+- La instalación busca `.env` y `folder.bash` junto al script, así que copia tu
+  token a `~/.astroenvs.env` aunque la ejecutes desde otra carpeta. Avisa cuando
+  ese archivo no tiene `TOKEN`.
 
 ## 1.0.1 (2026-11-14)
 

@@ -40,6 +40,17 @@ está en otro lugar, o Jupyter no está instalado en él.
   uv pip install jupyterlab ipykernel
   ```
 
+## "No default set" al pedir un token
+
+El gestor lee el token por defecto solo desde `~/.astroenvs.env`, no desde el
+`.env` del repositorio. La instalación copia uno al otro; si no lo hizo (por
+ejemplo, porque falló un paso anterior), cópialo tú:
+
+```bash
+cp ~/astrolab-setup/.env ~/.astroenvs.env && chmod 600 ~/.astroenvs.env
+grep TOKEN ~/.astroenvs.env
+```
+
 ## El navegador no abre la URL
 
 - Activa la VPN de la universidad: el servidor no es accesible desde fuera.

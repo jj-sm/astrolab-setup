@@ -92,22 +92,31 @@ else
     echo "✖ Could not download $ASTROENVS_URL"
 fi
 
+# .env and folder.bash are looked up next to this script first, so it works from any directory
+SETUP_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+setup_file() {
+    for f in "$SETUP_DIR/$1" "./$1" "./astrolab-setup/$1"; do
+        if [ -f "$f" ]; then
+            echo "$f"
+            return
+        fi
+    done
+}
+
 # The manager reads TOKEN from ~/.astroenvs.env (private: it grants access to your servers)
-if [ -f ".env" ]; then
-    cp .env ~/.astroenvs.env
+ENV_SRC=$(setup_file .env)
+if [ -n "$ENV_SRC" ]; then
+    cp "$ENV_SRC" ~/.astroenvs.env
     chmod 600 ~/.astroenvs.env
-elif [ -f "astrolab-setup/.env" ]; then
-    cp astrolab-setup/.env ~/.astroenvs.env
-    chmod 600 ~/.astroenvs.env
-else
-    echo "⚠ No .env found: create ~/.astroenvs.env with TOKEN=<your-token> before running astroenvs"
+    echo "✔ Copied $ENV_SRC to ~/.astroenvs.env"
+fi
+if ! grep -q '^[[:space:]]*\(export[[:space:]]\+\)\?TOKEN=.' ~/.astroenvs.env 2>/dev/null; then
+    echo "⚠ No TOKEN in ~/.astroenvs.env: add TOKEN=<your-token> to it, or astroenvs will ask for one every time"
 fi
 
-if [ -f "folder.bash" ]; then
-    cp folder.bash ~/.folder.sh
-    chmod +x ~/.folder.sh
-elif [ -f "astrolab-setup/folder.bash" ]; then
-    cp astrolab-setup/folder.bash ~/.folder.sh
+FOLDER_SRC=$(setup_file folder.bash)
+if [ -n "$FOLDER_SRC" ]; then
+    cp "$FOLDER_SRC" ~/.folder.sh
     chmod +x ~/.folder.sh
 fi
 

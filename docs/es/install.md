@@ -12,8 +12,8 @@ No necesitas `sudo`: todo queda en tu carpeta personal.
 
 ## 1. Descarga el repositorio
 
-Clónalo en tu carpeta personal. La instalación busca `.env` y `folder.bash`
-donde la ejecutas, ya sea en la carpeta actual o en `astrolab-setup/`.
+Clónalo en tu carpeta personal. La instalación lee `.env` y `folder.bash` de la
+carpeta del repositorio, desde donde sea que la ejecutes.
 
 ```bash
 cd ~

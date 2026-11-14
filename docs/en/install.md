@@ -12,8 +12,8 @@ You don't need `sudo`: everything goes into your home folder.
 
 ## 1. Get the repository
 
-Clone it into your home folder. The setup looks for `.env` and `folder.bash`
-next to where you run it, either in the current folder or in `astrolab-setup/`.
+Clone it into your home folder. The setup reads `.env` and `folder.bash` from
+the repository folder, wherever you run it from.
 
 ```bash
 cd ~
