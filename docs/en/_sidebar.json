@@ -1,8 +1,5 @@
 [
   {
-    "type": "separator"
-  },
-  {
     "type": "header",
     "label": "astrolab-setup"
   },
@@ -11,9 +8,6 @@
     "label": "Overview",
     "icon": "mdi:bookshelf",
     "target": "/astrophysics/astrolab-setup"
-  },
-  {
-    "type": "separator"
   },
   {
     "type": "link",

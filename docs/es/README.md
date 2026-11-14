@@ -4,6 +4,8 @@
 en astronomía y te da `astroenvs`, un gestor de terminal que inicia y detiene
 Jupyter Lab, CARTA, DS9 y CASA por ti.
 
+![astrolab-screenshot.png](/astrophysics/astrolab-setup/resources/astrolab-screenshot.png =600x){.align-center .decor-border .decor-rounded .decor-shadow}
+
 Todo se instala en tu carpeta personal, sin `sudo`.
 
 Versión actual: 1.0.1 (ver el [changelog](changelog.md)).

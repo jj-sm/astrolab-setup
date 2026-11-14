@@ -4,6 +4,8 @@
 gives you `astroenvs`, a terminal manager that starts and stops Jupyter Lab,
 CARTA, DS9 and CASA for you.
 
+![astrolab-screenshot.png](/astrophysics/astrolab-setup/resources/astrolab-screenshot.png =600x){.align-center .decor-border .decor-rounded .decor-shadow}
+
 Everything installs in your home folder, without `sudo`.
 
 Current version: 1.0.1 (see the [changelog](changelog.md)).
