@@ -56,7 +56,6 @@ DS9 and CASA's windows need X11 forwarding: install
 | `cmd/astroenvs/` | the manager, in Go |
 | `ipynb_setup.bash` | the setup script |
 | `folder.bash` | project folders (`tfold`) |
-| `astroenvs.sh` | the previous bash manager, used only if the binary can't be downloaded |
 | `docs/en/`, `docs/es/` | the documentation, published to docs.jjsm.science |
 
 Build with `go build -o astroenvs ./cmd/astroenvs` (Go 1.24+). Pushing a `v*`

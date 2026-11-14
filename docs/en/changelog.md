@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- The bash manager (`astroenvs.sh`) is removed. The setup installs only the Go
+  binary; if the download fails, it finishes everything else and stops with the
+  command to download it by hand.
+
 ## 1.0.0 (2026-11-14)
 
 The manager is now a Go program, `astroenvs`, downloaded as a binary by the

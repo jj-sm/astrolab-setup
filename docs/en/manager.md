@@ -61,8 +61,8 @@ folder set in `CARTA_TOP` (`/` by default); see [Configuration](configuration.md
 running servers with their folder and full URL, token included. The main menu
 also shows how many are running, e.g. `(2 running)`.
 
-Jupyter servers that weren't started by this manager (by hand, or by the old
-bash version) are listed too, with the output of `jupyter server list`.
+Jupyter servers that weren't started by this manager (by hand, or by the bash
+manager used before 1.0.0) are listed too, with the output of `jupyter server list`.
 
 ## Logs
 

@@ -61,9 +61,11 @@ Hace estos pasos y se detiene en el primer error:
    `.env` a `~/.astroenvs.env` y `folder.bash` a `~/.folder.sh`, y agrega los
    alias a `~/.bashrc`, `~/.bash_profile` y `~/.profile`
 
-Si en el paso 9 no puede llegar a GitHub, instala en su lugar la versión
-anterior del gestor, escrita en bash (`astroenvs.sh`), así que igual tendrás un
-`astroenvs` que funciona.
+Si la descarga del paso 9 falla, por ejemplo porque no se puede llegar a
+GitHub, la instalación igual termina el resto del paso y luego se detiene con un
+error que muestra el comando `curl` para descargar el gestor a mano. Los alias ya
+apuntan a `~/.local/bin/astroenvs`, así que el gestor funciona apenas lo
+descargues.
 
 Cuando termine, carga los alias nuevos:
 
@@ -92,6 +94,10 @@ En un servidor ARM, cambia `linux-amd64` por `linux-arm64`.
 
 Volver a ejecutar el script de instalación también es seguro: reinstala el
 gestor y reescribe los alias sin duplicarlos.
+
+Si instalaste antes de la versión 1.0.0, volver a ejecutar la instalación también
+cambia los alias `astroenvs` e `ipynb` del antiguo `bash ~/.astroenvs.sh` al
+binario nuevo. Después puedes borrar `~/.astroenvs.sh`.
 
 ## Carpetas de proyecto (`tfold`)
 

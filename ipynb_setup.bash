@@ -65,24 +65,18 @@ case "$(uname -m)" in
     *) ASTROENVS_ARCH=$(uname -m) ;;
 esac
 ASTROENVS_URL="https://github.com/jj-sm/astrolab-setup/releases/latest/download/astroenvs-$ASTROENVS_OS-$ASTROENVS_ARCH"
+ASTROENVS_CMD="$HOME/.local/bin/astroenvs"
+ASTROENVS_FAILED=""
 mkdir -p ~/.local/bin
 if curl -fsSL "$ASTROENVS_URL" -o ~/.local/bin/astroenvs.tmp; then
     chmod +x ~/.local/bin/astroenvs.tmp
     mv ~/.local/bin/astroenvs.tmp ~/.local/bin/astroenvs
-    ASTROENVS_CMD="$HOME/.local/bin/astroenvs"
     echo "✔ Installed $(~/.local/bin/astroenvs --version) to ~/.local/bin/astroenvs"
 else
-    # Fall back to the bash version of the manager (e.g. if GitHub is blocked)
+    # The rest of step 9 still runs, so downloading the binary by hand later is enough
     rm -f ~/.local/bin/astroenvs.tmp
-    echo "⚠ Could not download $ASTROENVS_URL; installing the bash manager instead"
-    if [ -f "astroenvs.sh" ]; then
-        cp astroenvs.sh ~/.astroenvs.sh
-        chmod +x ~/.astroenvs.sh
-    elif [ -f "astrolab-setup/astroenvs.sh" ]; then
-        cp astrolab-setup/astroenvs.sh ~/.astroenvs.sh
-        chmod +x ~/.astroenvs.sh
-    fi
-    ASTROENVS_CMD="bash ~/.astroenvs.sh"
+    ASTROENVS_FAILED=1
+    echo "✖ Could not download $ASTROENVS_URL"
 fi
 
 # The manager reads TOKEN from ~/.astroenvs.env (private: it grants access to your servers)
@@ -115,8 +109,8 @@ for PROFILE in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do
         echo 'export PATH="$HOME/.TinyTeX/bin/x86_64-linux:$HOME/.TinyTeX/bin/linux:$PATH"' >> "$PROFILE"
     fi
     
-    # Aliases are rewritten every run, so they follow the installed manager (binary or bash fallback).
-    # ipynb is kept and repointed, overriding any older ~/.ipynb.sh alias
+    # Aliases are rewritten every run, which also repoints the ones older installs made
+    # (bash ~/.astroenvs.sh, ~/.ipynb.sh)
     grep -v -E '^(# Astroenvs \(Jupyter \+ CARTA\) & Folder Manager Aliases$|alias (astroenvs|ipynb|tfold)=)' \
         "$PROFILE" > "$PROFILE.astroenvs-tmp" || true
     cat "$PROFILE.astroenvs-tmp" > "$PROFILE"
@@ -131,5 +125,12 @@ for PROFILE in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile"; do
 done
 
 touch ~/.root_ident
+
+if [ -n "$ASTROENVS_FAILED" ]; then
+    echo "=== Done, except the astroenvs manager: its download failed (is GitHub reachable from here?). ==="
+    echo "Everything else is installed. Download it by hand, then run 'source ~/.bashrc':"
+    echo "  curl -fsSL $ASTROENVS_URL -o ~/.local/bin/astroenvs && chmod +x ~/.local/bin/astroenvs"
+    exit 1
+fi
 
 echo "=== Done! Run 'source ~/.bashrc' or restart your terminal to start using 'astroenvs' (or 'ipynb') and 'tfold'. ==="

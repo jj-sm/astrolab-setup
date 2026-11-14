@@ -12,6 +12,14 @@ ls -l ~/.local/bin/astroenvs
 
 Si no está, descárgalo de nuevo (ver [Actualizar el gestor](install.md#actualizar-el-gestor)).
 
+## La instalación dice que falló la descarga de astroenvs
+
+La instalación descarga el gestor desde las releases de GitHub. Si eso falla, el
+resto de la instalación igual se completa, y las últimas líneas muestran el
+comando para descargarlo a mano. Revisa que el servidor pueda llegar a GitHub
+(`curl -I https://github.com`) y luego ejecuta ese comando, o el de
+[Actualizar el gestor](install.md#actualizar-el-gestor).
+
 ## "Could not find jupyter in ~/.ipynb/bin"
 
 El gestor ejecuta Jupyter desde el entorno virtual `~/.ipynb`. O la instalación

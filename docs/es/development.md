@@ -7,7 +7,6 @@
 | `cmd/astroenvs/` | el gestor, en Go |
 | `ipynb_setup.bash` | el script de instalación |
 | `folder.bash` | crea las carpetas de un proyecto (se instala como `tfold`) |
-| `astroenvs.sh` | el gestor anterior, en bash; solo se instala si no se puede descargar el binario |
 | `docs/en/`, `docs/es/` | esta documentación, en inglés y español |
 | `.github/workflows/build.yml` | compila los binarios y publica las versiones |
 | `.github/workflows/wikijs-docs.yml` | publica `docs/` en docs.jjsm.science |
@@ -27,7 +26,8 @@
 Las preguntas usan [huh](https://github.com/charmbracelet/huh). Los servidores
 parten en su propia sesión (`setsid`), así que sobreviven al cierre del gestor y
 de la sesión SSH. Cada instancia se guarda como JSON en `~/.astrolab/run/`; los
-archivos de texto que escribía el gestor en bash se siguen leyendo.
+archivos de texto que escribía el gestor en bash usado antes de la 1.0.0 se
+siguen leyendo, así que los servidores que dejó corriendo aparecen.
 
 ## Compilar
 

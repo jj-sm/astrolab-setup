@@ -61,8 +61,10 @@ It runs these steps, stopping at the first error:
    `.env` to `~/.astroenvs.env` and `folder.bash` to `~/.folder.sh`, and adds the
    aliases to `~/.bashrc`, `~/.bash_profile` and `~/.profile`
 
-If GitHub can't be reached in step 9, it installs the older bash version of the
-manager (`astroenvs.sh`) instead, so you still get a working `astroenvs`.
+If the download in step 9 fails, for example because GitHub can't be reached,
+the setup still finishes the rest of the step and then stops with an error
+showing the `curl` command to download the manager by hand. The aliases already
+point to `~/.local/bin/astroenvs`, so the manager works as soon as you download it.
 
 When it finishes, load the new aliases:
 
@@ -91,6 +93,10 @@ On an ARM server, replace `linux-amd64` with `linux-arm64`.
 
 Running the setup script again is also safe: it reinstalls the manager and
 rewrites the aliases without duplicating them.
+
+If you installed before version 1.0.0, running the setup again also moves the
+`astroenvs` and `ipynb` aliases from the old `bash ~/.astroenvs.sh` to the new
+binary. You can then delete `~/.astroenvs.sh`.
 
 ## Project folders (`tfold`)
 

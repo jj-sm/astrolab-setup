@@ -7,7 +7,6 @@
 | `cmd/astroenvs/` | the manager, in Go |
 | `ipynb_setup.bash` | the setup script |
 | `folder.bash` | creates a project's folders (installed as `tfold`) |
-| `astroenvs.sh` | the previous manager, in bash; installed only when the binary can't be downloaded |
 | `docs/en/`, `docs/es/` | these docs, in English and Spanish |
 | `.github/workflows/build.yml` | builds the binaries and publishes releases |
 | `.github/workflows/wikijs-docs.yml` | publishes `docs/` to docs.jjsm.science |
@@ -27,7 +26,8 @@
 The prompts use [huh](https://github.com/charmbracelet/huh). Servers start in
 their own session (`setsid`), so they survive the manager and the SSH session
 ending. Each instance is saved as JSON in `~/.astrolab/run/`; the plain-text
-files the bash manager wrote are still read.
+files written by the bash manager used before 1.0.0 are still read, so servers it
+left running show up.
 
 ## Building
 

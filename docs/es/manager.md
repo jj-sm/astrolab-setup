@@ -66,7 +66,8 @@ incluido. El menú principal también muestra cuántos hay, por ejemplo
 `(2 running)`.
 
 También aparecen los servidores de Jupyter que no inició este gestor (a mano, o
-con la versión antigua en bash), con lo que muestra `jupyter server list`.
+con el gestor en bash usado antes de la 1.0.0), con lo que muestra
+`jupyter server list`.
 
 ## Logs
 

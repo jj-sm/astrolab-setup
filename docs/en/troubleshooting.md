@@ -12,6 +12,14 @@ ls -l ~/.local/bin/astroenvs
 
 If it's missing, download it again (see [Updating the manager](install.md#updating-the-manager)).
 
+## The setup says the astroenvs download failed
+
+The setup downloads the manager from GitHub's releases. If that fails, the rest
+of the setup is still done, and the last lines show the command to download it
+by hand. Check that the server can reach GitHub (`curl -I https://github.com`),
+then run that command, or the one in
+[Updating the manager](install.md#updating-the-manager).
+
 ## "Could not find jupyter in ~/.ipynb/bin"
 
 The manager runs Jupyter from the `~/.ipynb` virtual environment. Either the
