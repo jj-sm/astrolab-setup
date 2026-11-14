@@ -20,11 +20,16 @@ by hand. Check that the server can reach GitHub (`curl -I https://github.com`),
 then run that command, or the one in
 [Updating the manager](install.md#updating-the-manager).
 
+## "~/.ipynb exists but isn't a virtual environment"
+
+The setup found a `~/.ipynb` folder that isn't a Python environment, and stopped
+rather than delete it. Look at what's inside, move it somewhere else (or delete
+it if you don't need it), and run the setup again.
+
 ## "Could not find jupyter in ~/.ipynb/bin"
 
 The manager runs Jupyter from the `~/.ipynb` virtual environment. Either the
-setup was run from another folder (it creates `.ipynb` in the current folder),
-or Jupyter isn't installed in it.
+environment is somewhere else, or Jupyter isn't installed in it.
 
 - If the environment is elsewhere, point the manager at it with
   `IPYNB_VENV=/path/to/venv` in `~/.astroenvs.env`.

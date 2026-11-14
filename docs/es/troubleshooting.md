@@ -20,11 +20,16 @@ comando para descargarlo a mano. Revisa que el servidor pueda llegar a GitHub
 (`curl -I https://github.com`) y luego ejecuta ese comando, o el de
 [Actualizar el gestor](install.md#actualizar-el-gestor).
 
+## "~/.ipynb exists but isn't a virtual environment"
+
+La instalación encontró una carpeta `~/.ipynb` que no es un entorno de Python, y
+se detuvo en vez de borrarla. Revisa qué tiene, muévela a otro lugar (o bórrala
+si no la necesitas) y vuelve a ejecutar la instalación.
+
 ## "Could not find jupyter in ~/.ipynb/bin"
 
-El gestor ejecuta Jupyter desde el entorno virtual `~/.ipynb`. O la instalación
-se ejecutó desde otra carpeta (crea `.ipynb` en la carpeta actual), o Jupyter no
-está instalado en él.
+El gestor ejecuta Jupyter desde el entorno virtual `~/.ipynb`. O el entorno
+está en otro lugar, o Jupyter no está instalado en él.
 
 - Si el entorno está en otro lugar, indícaselo al gestor con
   `IPYNB_VENV=/ruta/al/venv` en `~/.astroenvs.env`.

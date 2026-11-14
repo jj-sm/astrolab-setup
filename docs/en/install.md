@@ -12,9 +12,8 @@ You don't need `sudo`: everything goes into your home folder.
 
 ## 1. Get the repository
 
-Clone it into your home folder. The setup script expects to be run from there,
-because it creates the virtual environment in the current folder (`~/.ipynb`),
-which is where the manager looks for Jupyter.
+Clone it into your home folder. The setup looks for `.env` and `folder.bash`
+next to where you run it, either in the current folder or in `astrolab-setup/`.
 
 ```bash
 cd ~
@@ -51,7 +50,8 @@ It runs these steps, stopping at the first error:
 1. Installs `uv`
 2. Installs Python 3.11 and 3.13 with `uv`
 3. Prints the installed versions
-4. Creates the `~/.ipynb` virtual environment with Python 3.13
+4. Creates the `~/.ipynb` virtual environment with Python 3.13, or reuses it if
+   it already exists, keeping the packages you installed in it
 5. Installs `ipykernel` and `ipynb-jjsm-tools[full]` into it and registers the
    kernel *Python (ipynb 3.13)*
 6. Lists the installed packages

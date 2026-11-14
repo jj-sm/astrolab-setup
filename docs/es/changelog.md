@@ -1,5 +1,11 @@
 # Changelog
 
+## Sin publicar
+
+- Volver a ejecutar la instalación reutiliza un `~/.ipynb` existente en vez de
+  detenerse en la pregunta "already exists" de uv, y el entorno siempre se crea
+  en tu carpeta personal, desde donde sea que ejecutes la instalación.
+
 ## 1.0.1 (2026-11-14)
 
 - Se eliminó el gestor en bash (`astroenvs.sh`). La instalación solo instala el

@@ -12,9 +12,8 @@ No necesitas `sudo`: todo queda en tu carpeta personal.
 
 ## 1. Descarga el repositorio
 
-Clónalo en tu carpeta personal. El script de instalación está pensado para
-ejecutarse desde ahí, porque crea el entorno virtual en la carpeta actual
-(`~/.ipynb`), que es donde el gestor busca Jupyter.
+Clónalo en tu carpeta personal. La instalación busca `.env` y `folder.bash`
+donde la ejecutas, ya sea en la carpeta actual o en `astrolab-setup/`.
 
 ```bash
 cd ~
@@ -51,7 +50,8 @@ Hace estos pasos y se detiene en el primer error:
 1. Instala `uv`
 2. Instala Python 3.11 y 3.13 con `uv`
 3. Muestra las versiones instaladas
-4. Crea el entorno virtual `~/.ipynb` con Python 3.13
+4. Crea el entorno virtual `~/.ipynb` con Python 3.13, o lo reutiliza si ya
+   existe, conservando los paquetes que instalaste en él
 5. Instala `ipykernel` e `ipynb-jjsm-tools[full]` en él y registra el kernel
    *Python (ipynb 3.13)*
 6. Lista los paquetes instalados

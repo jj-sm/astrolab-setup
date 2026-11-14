@@ -17,8 +17,21 @@ uv python find 3.13
 uv --version
 
 echo "=== 4. ipynb virtual environment setup (using Python 3.13) ==="
-uv venv --python 3.13 .ipynb
-source .ipynb/bin/activate
+# Always in the home folder, where astroenvs looks for it, wherever this script is run from
+IPYNB_VENV="$HOME/.ipynb"
+if [ -x "$IPYNB_VENV/bin/python" ]; then
+    # Re-running the setup keeps the existing environment and the packages installed in it
+    echo "Reusing the existing virtual environment at $IPYNB_VENV ($("$IPYNB_VENV/bin/python" --version))"
+elif [ -e "$IPYNB_VENV" ] && [ ! -f "$IPYNB_VENV/pyvenv.cfg" ]; then
+    # Not a virtual environment: never delete it, it may hold someone's files
+    echo "✖ $IPYNB_VENV exists but isn't a virtual environment."
+    echo "  Move or delete it, then run the setup again."
+    exit 1
+else
+    # --clear replaces a broken environment instead of stopping at uv's "already exists" prompt
+    uv venv --python 3.13 --clear "$IPYNB_VENV"
+fi
+source "$IPYNB_VENV/bin/activate"
 
 echo "=== 5. Installing package and ipykernel into virtual environment ==="
 uv pip install ipykernel

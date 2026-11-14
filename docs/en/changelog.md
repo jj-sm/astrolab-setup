@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Re-running the setup reuses an existing `~/.ipynb` instead of stopping at
+  uv's "already exists" prompt, and the environment is always created in your
+  home folder, wherever you run the setup from.
+
 ## 1.0.1 (2026-11-14)
 
 - The bash manager (`astroenvs.sh`) is removed. The setup installs only the Go
