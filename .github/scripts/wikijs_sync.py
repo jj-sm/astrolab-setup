@@ -32,12 +32,15 @@ Only the Python standard library is used. Quarto must be on PATH for
 """
 import argparse
 import base64
+import hashlib
+import hmac
 import http.cookiejar
 import json
 import mimetypes
 import os
 import re
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
@@ -266,6 +269,18 @@ def build_page(src: Path, execute: bool) -> tuple[str, str]:
 # Wiki.js API
 # --------------------------------------------------------------------------
 
+def totp_code(secret: str) -> str:
+    """RFC 6238 6-digit TOTP code (SHA-1, 30s step) from a Base32 secret."""
+    cleaned = re.sub(r"[\s=-]+", "", secret).upper()
+    padded = cleaned + "=" * ((8 - len(cleaned) % 8) % 8)
+    key = base64.b32decode(padded, casefold=True)
+    counter = struct.pack(">Q", int(time.time()) // 30)
+    digest = hmac.new(key, counter, hashlib.sha1).digest()
+    offset = digest[-1] & 0x0F
+    code = (struct.unpack(">I", digest[offset:offset + 4])[0] & 0x7FFFFFFF) % 1_000_000
+    return f"{code:06d}"
+
+
 class Wiki:
     """Wiki.js v3 REST client (tested against 3.0.0-beta.631).
 
@@ -303,7 +318,7 @@ class Wiki:
             detail = e.read().decode(errors="replace")[:500]
             raise SystemExit(f"{method} {url} -> HTTP {e.code}: {detail}")
 
-    def login(self, username, password):
+    def login(self, username, password, tfa_secret=""):
         strategies = self._req("GET", "/auth/strategies") or []
         local = next((s for s in strategies
                       if s.get("activeStrategy", {}).get("strategy", {}).get("key") == "local"), None)
@@ -311,6 +326,15 @@ class Wiki:
             raise SystemExit("no local authentication strategy on this site")
         res = self._req("PUT", "/auth/login",
                         {"strategyId": local["id"], "username": username, "password": password}) or {}
+        if res.get("nextAction") == "provideTfa":
+            if not tfa_secret:
+                raise SystemExit(f"login as {username} requires 2FA (provideTfa), but WIKI_TFA_SECRET is not set")
+            res = self._req("PUT", "/auth/tfa", {
+                "strategyId": local["id"],
+                "continuationToken": res["continuationToken"],
+                "securityCode": totp_code(tfa_secret),
+                "setup": False,
+            }) or {}
         if not res.get("authenticated"):
             raise SystemExit(f"login as {username} did not complete (nextAction: {res.get('nextAction')})")
 
@@ -556,7 +580,8 @@ def main():
     elif not args.dry_run:
         try:
             wiki = Wiki(os.environ["WIKI_URL"], os.environ["WIKI_SITE_ID"])
-            wiki.login(os.environ["WIKI_USERNAME"], os.environ["WIKI_PASSWORD"])
+            tfa_secret = os.environ.get("WIKI_TFA_SECRET") or os.environ.get("WIKI_2FA_SECRET") or ""
+            wiki.login(os.environ["WIKI_USERNAME"], os.environ["WIKI_PASSWORD"], tfa_secret)
         except KeyError as e:
             raise SystemExit(f"missing environment variable {e}")
     # (locale code, folder, URL prefix); None publishes to the site's primary locale
