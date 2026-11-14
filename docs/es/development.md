@@ -1,0 +1,96 @@
+# Desarrollo
+
+## Estructura del repositorio
+
+| Ruta | Contenido |
+|---|---|
+| `cmd/astroenvs/` | el gestor, en Go |
+| `ipynb_setup.bash` | el script de instalación |
+| `folder.bash` | crea las carpetas de un proyecto (se instala como `tfold`) |
+| `astroenvs.sh` | el gestor anterior, en bash; solo se instala si no se puede descargar el binario |
+| `docs/en/`, `docs/es/` | esta documentación, en inglés y español |
+| `.github/workflows/build.yml` | compila los binarios y publica las versiones |
+| `.github/workflows/wikijs-docs.yml` | publica `docs/` en docs.jjsm.science |
+
+## El código del gestor
+
+`cmd/astroenvs/` es un solo paquete de Go:
+
+| Archivo | Contenido |
+|---|---|
+| `main.go` | flags y el menú principal |
+| `config.go` | lectura de `~/.astroenvs.env` y valores por defecto |
+| `ui.go` | las preguntas: selector de carpetas, token, autocompletado de rutas, estilos |
+| `actions.go` | una función por opción del menú |
+| `process.go` | inicio de procesos separados, registro de instancias, puertos, logs |
+
+Las preguntas usan [huh](https://github.com/charmbracelet/huh). Los servidores
+parten en su propia sesión (`setsid`), así que sobreviven al cierre del gestor y
+de la sesión SSH. Cada instancia se guarda como JSON en `~/.astrolab/run/`; los
+archivos de texto que escribía el gestor en bash se siguen leyendo.
+
+## Compilar
+
+Necesitas Go 1.24 o más reciente.
+
+```bash
+go build -o astroenvs ./cmd/astroenvs
+./astroenvs --version              # astroenvs dev
+```
+
+Para el servidor, compila un binario estático de Linux:
+
+```bash
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
+  -ldflags "-s -w -X main.version=v1.0.0" -o astroenvs-linux-amd64 ./cmd/astroenvs
+```
+
+Ejecuta `go vet ./...` y `gofmt -l cmd/` antes de hacer commit.
+
+## Versiones
+
+`build.yml` compila binarios para `linux/amd64`, `linux/arm64`, `darwin/amd64` y
+`darwin/arm64` en cada push y pull request, y los adjunta a la ejecución del
+workflow. Al subir un tag que empiece con `v`, además los publica, junto con un
+`checksums.txt`, como una GitHub Release:
+
+```bash
+git tag v1.1.0
+git push origin v1.1.0
+```
+
+El script de instalación y el comando de actualización descargan desde
+`releases/latest`, así que una versión nueva le llega a todos los que actualicen.
+
+## Esta documentación
+
+La documentación es Markdown en `docs/en/` y `docs/es/`. Los archivos con el
+mismo nombre son traducciones entre sí y quedan enlazados en la wiki, así que
+mantén ambos idiomas al día.
+
+- `README.md` es la página de resumen en `/astrophysics/astrolab-setup`
+- cada otro archivo `nombre.md` queda en `/astrophysics/astrolab-setup/nombre`,
+  y en `/es/astrophysics/astrolab-setup/nombre` para español
+- el primer `# Título` es el título de la página
+- enlaza entre páginas con enlaces relativos (`[Configuración](configuration.md)`);
+  se reescriben al idioma correcto
+- `_sidebar.json` en cada carpeta es la barra lateral de ese idioma
+
+`wikijs-docs.yml` la publica en cada push a `main` que cambie `docs/`, usando
+`.github/scripts/wikijs_sync.py` y la entrada del proyecto en
+`.github/wikijs-projects.json`. También se puede ejecutar a mano desde la
+pestaña Actions.
+
+Para previsualizar en local sin publicar:
+
+```bash
+python3 .github/scripts/wikijs_sync.py --src docs --locales en,es \
+  --prefix astrophysics/astrolab-setup --dry-run
+```
+
+Esto escribe las páginas, tal como se publicarían, en `wikisync-preview/`.
+
+El workflow necesita estos secrets del repositorio: `WIKI_USERNAME`,
+`WIKI_PASSWORD`, `WIKI_SITE_ID`, `CF_API_TOKEN` y `CF_ZONE_ID`. Además, el grupo
+del usuario de la wiki necesita una regla de páginas que le permita escribir
+bajo `astrophysics/astrolab-setup`, en ambos idiomas.

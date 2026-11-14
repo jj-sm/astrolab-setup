@@ -1,0 +1,43 @@
+{
+  "$comment": [
+    "Projects published to https://docs.jjsm.science by .github/workflows/wikijs-docs.yml.",
+    "One entry per docs folder in this repo.",
+    "  name      job label, and the value of the 'project' input for a manual run",
+    "  src       docs folder; <src>/README.md (or index.md) becomes the page at 'prefix'",
+    "  locales   optional, e.g. \"en,es\": <src>/en/, <src>/es/ each publish to that Wiki.js locale",
+    "            (/es/<prefix>/...); files with the same path are linked as translations",
+    "            an optional _sidebar.json in a docs folder is that locale's sidebar on the 'prefix' page;",
+    "            edits made on the wiki are kept unless the file changed too (then the file wins);",
+    "            wikijs_sync.py --pull-sidebar copies the wiki's sidebars back into the files",
+    "  prefix    wiki path prefix, e.g. physics/fusion/asdex-upgrade -> docs.jjsm.science/physics/fusion/asdex-upgrade",
+    "  tags      comma-separated tags added to every page of this project",
+    "  watch     path prefixes that trigger a publish on push (default: [src])",
+    "  notebooks true if src holds .ipynb/.qmd files -> sets up Quarto",
+    "  execute   true to run the notebooks before rendering (needs 'install')",
+    "  install   shell command that installs what the notebooks import (run from the repo root)",
+    "  pagetools false to drop the GitHub/Edit/Cite block (the links 404 on a private repo)",
+    "",
+    "Before a NEW prefix publishes: in Wiki.js, give the sync user's group a page rule",
+    "allowing read/write/manage pages on a path STARTING WITH that prefix, or the run",
+    "fails with 403 'You are not allowed to create a page here.'",
+    "With locales, the rule must cover every one of them (leave its locales empty, or list them all).",
+    "Wiki.js also slugifies paths on save (aurora_lbo -> aurora-lbo); wikijs_sync.py",
+    "matches that, so a file with _ in its name is fine."
+  ],
+  "projects": [
+    {
+      "name": "astrolab-setup",
+      "src": "docs",
+      "locales": "en,es",
+      "prefix": "astrophysics/astrolab-setup",
+      "tags": "astrophysics,jupyter,tools",
+      "watch": [
+        "docs"
+      ],
+      "notebooks": false,
+      "execute": false,
+      "install": "",
+      "pagetools": true
+    }
+  ]
+}

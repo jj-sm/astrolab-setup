@@ -1,0 +1,61 @@
+[
+  {
+    "type": "separator"
+  },
+  {
+    "type": "header",
+    "label": "astrolab-setup"
+  },
+  {
+    "type": "link",
+    "label": "Resumen",
+    "icon": "mdi:bookshelf",
+    "target": "/es/astrophysics/astrolab-setup"
+  },
+  {
+    "type": "separator"
+  },
+  {
+    "type": "link",
+    "label": "Instalación",
+    "icon": "mdi:download",
+    "target": "/es/astrophysics/astrolab-setup/install"
+  },
+  {
+    "type": "link",
+    "label": "Uso del gestor",
+    "icon": "mdi:console",
+    "target": "/es/astrophysics/astrolab-setup/manager"
+  },
+  {
+    "type": "link",
+    "label": "Configuración",
+    "icon": "mdi:cog",
+    "target": "/es/astrophysics/astrolab-setup/configuration"
+  },
+  {
+    "type": "link",
+    "label": "Solución de problemas",
+    "icon": "mdi:lifebuoy",
+    "target": "/es/astrophysics/astrolab-setup/troubleshooting"
+  },
+  {
+    "type": "header",
+    "label": "Desarrollo"
+  },
+  {
+    "type": "separator"
+  },
+  {
+    "type": "link",
+    "label": "Desarrollo",
+    "icon": "mdi:code-braces",
+    "target": "/es/astrophysics/astrolab-setup/development"
+  },
+  {
+    "type": "link",
+    "label": "Changelog",
+    "icon": "mdi:history",
+    "target": "/es/astrophysics/astrolab-setup/changelog"
+  }
+]

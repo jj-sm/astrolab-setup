@@ -1,0 +1,61 @@
+[
+  {
+    "type": "separator"
+  },
+  {
+    "type": "header",
+    "label": "astrolab-setup"
+  },
+  {
+    "type": "link",
+    "label": "Overview",
+    "icon": "mdi:bookshelf",
+    "target": "/astrophysics/astrolab-setup"
+  },
+  {
+    "type": "separator"
+  },
+  {
+    "type": "link",
+    "label": "Installation",
+    "icon": "mdi:download",
+    "target": "/astrophysics/astrolab-setup/install"
+  },
+  {
+    "type": "link",
+    "label": "Using the manager",
+    "icon": "mdi:console",
+    "target": "/astrophysics/astrolab-setup/manager"
+  },
+  {
+    "type": "link",
+    "label": "Configuration",
+    "icon": "mdi:cog",
+    "target": "/astrophysics/astrolab-setup/configuration"
+  },
+  {
+    "type": "link",
+    "label": "Troubleshooting",
+    "icon": "mdi:lifebuoy",
+    "target": "/astrophysics/astrolab-setup/troubleshooting"
+  },
+  {
+    "type": "header",
+    "label": "Development"
+  },
+  {
+    "type": "separator"
+  },
+  {
+    "type": "link",
+    "label": "Development",
+    "icon": "mdi:code-braces",
+    "target": "/astrophysics/astrolab-setup/development"
+  },
+  {
+    "type": "link",
+    "label": "Changelog",
+    "icon": "mdi:history",
+    "target": "/astrophysics/astrolab-setup/changelog"
+  }
+]

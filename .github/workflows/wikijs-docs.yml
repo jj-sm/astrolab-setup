@@ -1,0 +1,193 @@
+# Publishes each project's docs folder (Markdown, plus Quarto .qmd / Jupyter
+# .ipynb) to https://docs.jjsm.science.
+# Projects live in .github/wikijs-projects.json; add an entry per project.
+# Repo secrets needed: WIKI_USERNAME, WIKI_PASSWORD, WIKI_SITE_ID, CF_API_TOKEN, CF_ZONE_ID
+name: Publish docs to Wiki.js
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/docs/**'
+      - '.github/wikijs-projects.json'
+      - '.github/scripts/wikijs_sync.py'
+      - '.github/workflows/wikijs-docs.yml'
+  # Manual runs (Actions tab) for when only the script or the workflow changed.
+  workflow_dispatch:
+    inputs:
+      project:
+        description: "Only this project (name in .github/wikijs-projects.json); empty = all"
+        required: false
+        default: ''
+
+concurrency:
+  group: wikijs-docs
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  # Which projects does this run touch? A push publishes only the projects
+  # whose watched paths changed; anything else publishes them all.
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.pick.outputs.matrix }}
+      count: ${{ steps.pick.outputs.count }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # the push diff needs history
+
+      - id: pick
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_PROJECT: ${{ inputs.project }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          cfg=.github/wikijs-projects.json
+          all=$(jq -c '.projects' "$cfg")
+
+          if [ "$EVENT" != "push" ]; then
+            if [ -n "$INPUT_PROJECT" ]; then
+              sel=$(jq -c --arg n "$INPUT_PROJECT" '[.[] | select(.name == $n)]' <<<"$all")
+              if [ "$(jq length <<<"$sel")" -eq 0 ]; then
+                echo "no project named '$INPUT_PROJECT' in $cfg"; exit 1
+              fi
+            else
+              sel=$all
+            fi
+          elif [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ] \
+               || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            echo "no usable base commit; publishing every project"
+            sel=$all
+          else
+            changed=$(git diff --name-only "$BEFORE" "$GITHUB_SHA")
+            echo "changed files:"; echo "$changed" | sed 's/^/  /'
+            if grep -qxE '\.github/(scripts/wikijs_sync\.py|workflows/wikijs-docs\.yml|wikijs-projects\.json)' <<<"$changed"; then
+              echo "the sync machinery changed; publishing every project"
+              sel=$all
+            else
+              sel=$(jq -c --arg changed "$changed" '
+                ($changed | split("\n") | map(select(length > 0))) as $files
+                | [ .[] | select(
+                    (.watch // [.src]) as $watch
+                    | any($files[]; . as $f
+                        | any($watch[]; . as $w | $f == $w or ($f | startswith($w + "/"))))
+                  ) ]' <<<"$all")
+            fi
+          fi
+
+          echo "publishing: $(jq -r '[.[].name] | join(", ") // "(none)"' <<<"$sel")"
+          echo "count=$(jq length <<<"$sel")" >> "$GITHUB_OUTPUT"
+          echo "matrix=$(jq -c '{include: .}' <<<"$sel")" >> "$GITHUB_OUTPUT"
+
+  publish:
+    needs: discover
+    if: needs.discover.outputs.count != '0'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 1             # the wiki's render queue is rate limited
+      matrix: ${{ fromJson(needs.discover.outputs.matrix) }}
+    name: publish ${{ matrix.name }}
+    env:
+      WIKI_URL: https://docs.jjsm.science
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # the sidebar merge reads _sidebar.json as of the commit before the push
+
+      - if: matrix.notebooks
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Cloudflare's Bot Fight Mode challenges GitHub's (Azure) runner IPs and
+      # can't be skipped by WAF rules, only by an IP Access "allow" rule. Runner
+      # IPs change every run, so allow just this runner's IP while the job runs
+      # (created here, before the install, so it has time to propagate).
+      - name: Allow this runner through Cloudflare
+        id: cf_allow
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+        run: |
+          ip=$(curl -fsS https://www.cloudflare.com/cdn-cgi/trace | sed -n 's/^ip=//p')
+          [ -n "$ip" ] || { echo "Could not determine the runner's public IP"; exit 1; }
+          echo "Runner IP as seen by Cloudflare: $ip"
+          resp=$(curl -sS -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/firewall/access_rules/rules" \
+            -H "Authorization: Bearer $CF_API_TOKEN" -H "Content-Type: application/json" \
+            --data "{\"mode\":\"whitelist\",\"configuration\":{\"target\":\"ip\",\"value\":\"$ip\"},\"notes\":\"Temporary: $GITHUB_REPOSITORY wikijs-docs run $GITHUB_RUN_ID\"}")
+          if [ "$(echo "$resp" | jq -r '.success')" != "true" ]; then
+            echo "$resp"; exit 1
+          fi
+          echo "rule_id=$(echo "$resp" | jq -r '.result.id')" >> "$GITHUB_OUTPUT"
+
+      # The rule above needs a moment to reach the edge. varistar gets that time
+      # for free from its install step; a Markdown-only project has nothing in
+      # between, and the publish hits "Just a moment..." (403) instead.
+      # Unauthenticated, /_api/sites answers 401 once the runner is let through.
+      - name: Wait for the Cloudflare allow rule to take effect
+        run: |
+          for i in $(seq 1 24); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$WIKI_URL/_api/sites" || echo 000)
+            if [ "$code" != "403" ]; then
+              echo "through the edge after $(( (i - 1) * 5 ))s (HTTP $code)"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "the Cloudflare allow rule never took effect (still HTTP 403 after 120s)"
+          exit 1
+
+      - name: Install Jupyter + project
+        if: matrix.notebooks
+        env:
+          INSTALL: ${{ matrix.install }}
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install jupyter nbformat nbclient
+          if [ -n "$INSTALL" ]; then
+            eval "$INSTALL"
+          fi
+
+      - name: Publish
+        env:
+          # Saving pages needs a logged-in user; Wiki.js API keys can't author pages.
+          WIKI_USERNAME: ${{ secrets.WIKI_USERNAME }}
+          WIKI_PASSWORD: ${{ secrets.WIKI_PASSWORD }}
+          WIKI_SITE_ID: ${{ secrets.WIKI_SITE_ID }}
+          SRC: ${{ matrix.src }}
+          PREFIX: ${{ matrix.prefix }}
+          TAGS: ${{ matrix.tags }}
+          # e.g. "en,es": one subfolder of SRC per Wiki.js locale; empty = one language
+          LOCALES: ${{ matrix.locales }}
+          EXECUTE: ${{ matrix.execute }}
+          PAGETOOLS: ${{ matrix.pagetools }}
+          # empty on a manual run: the sidebar file then wins over the wiki's menu
+          BEFORE: ${{ github.event.before }}
+        run: |
+          args=(--src "$SRC" --prefix "$PREFIX")
+          if [ -n "$TAGS" ]; then args+=(--tags "$TAGS"); fi
+          if [ -n "$LOCALES" ]; then args+=(--locales "$LOCALES"); fi
+          if [ "$EXECUTE" = "true" ]; then args+=(--execute); fi
+          if [ "$PAGETOOLS" = "false" ]; then args+=(--no-pagetools); fi
+          if [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ]; then
+            args+=(--sidebar-base "$BEFORE")
+          fi
+          python .github/scripts/wikijs_sync.py "${args[@]}"
+
+      - name: Remove the temporary Cloudflare rule
+        if: always() && steps.cf_allow.outputs.rule_id != ''
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+        run: |
+          curl -sS -X DELETE "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/firewall/access_rules/rules/${{ steps.cf_allow.outputs.rule_id }}" \
+            -H "Authorization: Bearer $CF_API_TOKEN" | jq '{success, errors}'

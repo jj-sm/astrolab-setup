@@ -1,3 +1,4 @@
 .env
 /astroenvs
 /dist/
+/wikisync-preview/
