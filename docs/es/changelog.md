@@ -2,6 +2,10 @@
 
 ## Sin publicar
 
+- **Servidores de Jupyter aislados**: una nueva pregunta, **Access**, al iniciar
+  Jupyter. Un servidor aislado solo ve su carpeta (más `~/.ipynb` y el sistema,
+  en solo lectura), así que su URL se puede compartir sin exponer el resto de tu
+  cuenta. Usa user namespaces de Linux; no hay que instalar nada.
 - **Seguridad:** el token de Jupyter ya no va en la línea de comandos, donde
   cualquier usuario del servidor podía verlo con `ps`. `~/.astrolab` y sus logs,
   que contienen las URLs con tokens, ahora solo los puedes leer tú. Reinicia los

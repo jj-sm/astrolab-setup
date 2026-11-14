@@ -16,12 +16,14 @@ Vuelve a abrir el gestor cuando quieras para verlos, leer sus logs o detenerlos.
 
 ## Iniciar Jupyter
 
-**Jupyter · Start server** hace dos preguntas:
+**Jupyter · Start server** hace tres preguntas:
 
 1. **Start in**: la carpeta donde se abre Jupyter. Tu carpeta personal aparece
    primero y es la opción por defecto; después vienen las carpetas de
    `DATA_DIRS` y **Custom path…** para cualquier otra.
-2. **Token**: el token por defecto de `~/.astroenvs.env`, o **Type a different
+2. **Access**: **Normal** llega a todos tus archivos; **Sandboxed** solo ve la
+   carpeta del paso 1. Mira [Servidores aislados](#servidores-aislados).
+3. **Token**: el token por defecto de `~/.astroenvs.env`, o **Type a different
    token…** para usar otro solo en este servidor.
 
 Luego muestra la dirección que debes abrir:
@@ -32,10 +34,10 @@ Open in your browser (VPN on):
   http://10.254.0.10:8888/lab?token=...
 ```
 
-La carpeta que eliges es donde parte el explorador de archivos de Jupyter y la
-más alta que muestra. No es una barrera de seguridad: la terminal y los
-notebooks de Jupyter corren con tu cuenta y llegan a todos tus archivos. Mira
-[Compartir y seguridad](#compartir-y-seguridad).
+En un servidor normal, la carpeta que eliges solo es donde parte el explorador
+de archivos de Jupyter y la más alta que muestra. La terminal y los notebooks de
+Jupyter corren con tu cuenta y llegan a todos tus archivos, así que no compartas
+la URL de un servidor normal.
 
 Cada servidor usa el primer puerto libre desde el 8888. El servidor es
 compartido, así que otra persona puede estar usando ya el 8888; el gestor lo
@@ -121,23 +123,57 @@ elijas:
 Jupyter recibe una señal de cierre normal para que pueda cerrar sus kernels.
 CARTA y DS9 se detienen junto con los procesos que hayan abierto.
 
+## Servidores aislados
+
+Elige **Sandboxed** cuando otra persona vaya a usar la URL, por ejemplo para
+trabajar en `~/shared/T5` con un compañero. Dentro de un servidor aislado, los
+notebooks y la terminal funcionan como siempre, pero solo existe esto:
+
+| Dentro del sandbox | Acceso |
+|---|---|
+| La carpeta que elegiste | lectura y escritura |
+| `~/.ipynb`, su Python y `~/.TinyTeX` | solo lectura |
+| Carpetas del sistema (`/usr`, `/etc`, …) | solo lectura |
+| Tu carpeta personal y `/tmp` | vacías, y se borran al detener el servidor |
+| El resto de tus archivos, otras carpetas de datos | no existen |
+| Tus otros procesos | invisibles |
+
+Así, `cd ..` se detiene en la carpeta y `ls ~` no muestra nada tuyo. Los
+paquetes instalados en `~/.ipynb` funcionan, pero nadie puede instalar en él ni
+cambiarlo desde el sandbox.
+
+Lo que no cambia:
+
+- **Los archivos de la carpeta** los puede leer, cambiar y borrar quien tenga la
+  URL. Revisa los scripts que aparezcan ahí antes de ejecutarlos fuera del
+  sandbox.
+- **La red**: el código dentro del sandbox igual puede llegar a internet y a
+  otros servicios del servidor.
+- **Los límites de tu cuenta**: cuenta para tu cuota de disco y CPU, y aparece
+  como procesos tuyos.
+
+No puedes aislar tu carpeta personal completa, ni `/`, porque contienen todo lo
+demás. Elige una subcarpeta. El sandbox necesita Linux con user namespaces, que
+el servidor del laboratorio tiene; en otros sistemas el gestor no lo ofrece. En
+**Active instances** y **Stop an instance**, los servidores aislados aparecen
+marcados `(sandboxed)`.
+
 ## Compartir y seguridad
 
-Una URL de Jupyter con su token vale lo mismo que tu contraseña. Quien la abra
-tiene una terminal y notebooks que corren como tú: puede leer, cambiar y borrar
-cualquier cosa de tu cuenta, sin importar en qué carpeta iniciaste Jupyter. Una
-URL de CARTA da acceso a las imágenes que CARTA puede abrir.
+Una URL de Jupyter con su token vale lo mismo que tu contraseña. En un servidor
+normal, quien la abra tiene una terminal y notebooks que corren como tú: puede
+leer, cambiar y borrar cualquier cosa de tu cuenta, sin importar en qué carpeta
+iniciaste Jupyter. Una URL de CARTA da acceso a las imágenes que CARTA puede
+abrir.
 
-- **No compartas URLs de Jupyter**, ni siquiera para una carpeta como
-  `~/shared/T5`.
+- **Comparte solo URLs de servidores aislados**, y solo con personas a las que
+  dejarías cambiar esa carpeta.
 - **Usa un token largo y aleatorio.** Los servidores se pueden alcanzar desde
   toda la red, así que una palabra como `Capybara` se puede adivinar. El gestor
   avisa si el token tiene menos de 16 caracteres. Para generar uno:
   `python3 -c "import secrets; print(secrets.token_urlsafe(24))"`
-- **Para trabajar en archivos con compañeros**, cada persona inicia su propio
-  servidor con su propia cuenta, y la carpeta compartida recibe acceso mediante
-  grupos de Unix o ACLs. Pide a los administradores del servidor que lo
-  configuren.
+- **Detén un servidor compartido** cuando termines, o inicia uno nuevo con otro
+  token, para cortar el acceso.
 
 El gestor mantiene los tokens fuera del alcance de otros usuarios del servidor.
 Le pasa el token a Jupyter por el entorno (cualquier usuario ve las líneas de

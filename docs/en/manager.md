@@ -16,12 +16,14 @@ again at any time to see them, read their logs or stop them.
 
 ## Starting Jupyter
 
-**Jupyter · Start server** asks two questions:
+**Jupyter · Start server** asks three questions:
 
 1. **Start in**: the folder Jupyter opens in. Your home folder is first and is
    the default, followed by the folders in `DATA_DIRS`, and **Custom path…**
    for any other folder.
-2. **Token**: the default one from `~/.astroenvs.env`, or **Type a different
+2. **Access**: **Normal** reaches all your files; **Sandboxed** sees only the
+   folder from step 1. See [Sandboxed servers](#sandboxed-servers).
+3. **Token**: the default one from `~/.astroenvs.env`, or **Type a different
    token…** to use another one for this server only.
 
 Then it prints the address to open:
@@ -32,10 +34,10 @@ Open in your browser (VPN on):
   http://10.254.0.10:8888/lab?token=...
 ```
 
-The folder you choose is where Jupyter's file browser starts and the highest
-folder it shows. It's not a security boundary: Jupyter's terminal and notebooks
-run as your account and can reach every file you can. See
-[Sharing and security](#sharing-and-security).
+On a normal server, the folder you choose is only where Jupyter's file browser
+starts and the highest folder it shows. Jupyter's terminal and notebooks run as
+your account and can reach every file you can, so don't share the URL of a
+normal server.
 
 Each server gets the first free port from 8888 up. The server is shared, so
 someone else may already be on 8888; the manager checks and moves on.
@@ -116,21 +118,54 @@ you choose:
 Jupyter gets a normal shutdown signal so it can close its kernels. CARTA and DS9
 are stopped together with any processes they started.
 
+## Sandboxed servers
+
+Choose **Sandboxed** when someone else will use the URL, for example to work on
+`~/shared/T5` with a classmate. Inside a sandboxed server, notebooks and the
+terminal work as usual, but only these exist:
+
+| Inside the sandbox | Access |
+|---|---|
+| The folder you picked | read and write |
+| `~/.ipynb`, its Python and `~/.TinyTeX` | read-only |
+| System folders (`/usr`, `/etc`, …) | read-only |
+| Your home folder and `/tmp` | empty, and wiped when the server stops |
+| The rest of your files, other data folders | don't exist |
+| Your other processes | invisible |
+
+So `cd ..` stops at the folder, and `ls ~` shows nothing of yours. Packages
+installed in `~/.ipynb` work, but nobody can install into it or change it from
+the sandbox.
+
+What it doesn't change:
+
+- **Files in the folder** can be read, changed and deleted by whoever has the
+  URL. Check scripts that appear there before running them outside the sandbox.
+- **The network**: code in the sandbox can still reach the internet and other
+  services on the server.
+- **Your account's limits**: it counts against your disk quota and CPU, and
+  shows up as your processes.
+
+You can't sandbox your home folder itself, or `/`, since they hold everything
+else. Pick a subfolder. The sandbox needs Linux with user namespaces, which the
+lab server has; elsewhere, the manager doesn't offer it. In **Active instances**
+and **Stop an instance**, sandboxed servers are marked `(sandboxed)`.
+
 ## Sharing and security
 
-A Jupyter URL with its token is as good as your password. Whoever opens it gets
-a terminal and notebooks running as you: they can read, change and delete
-anything in your account, whichever folder you started Jupyter in. A CARTA URL
-gives access to the images CARTA can open.
+A Jupyter URL with its token is as good as your password. On a normal server,
+whoever opens it gets a terminal and notebooks running as you: they can read,
+change and delete anything in your account, whichever folder you started
+Jupyter in. A CARTA URL gives access to the images CARTA can open.
 
-- **Don't share Jupyter URLs**, not even for a folder like `~/shared/T5`.
+- **Share only the URLs of sandboxed servers**, and only with people you'd let
+  change that folder.
 - **Use a long random token.** The servers can be reached from the whole
   network, so a word like `Capybara` can be guessed. The manager warns about
   tokens shorter than 16 characters. To make one:
   `python3 -c "import secrets; print(secrets.token_urlsafe(24))"`
-- **To work on files with classmates**, each person runs their own server with
-  their own account, and the shared folder is given access through Unix groups
-  or ACLs. Ask the server's administrators to set this up.
+- **Stop a shared server** when you're done with it, or start a new one with a
+  different token, to cut off access.
 
 The manager keeps tokens away from other users of the server. It passes the
 token to Jupyter through the environment (command lines are visible to every

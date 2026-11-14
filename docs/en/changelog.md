@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Sandboxed Jupyter servers**: a new **Access** question when starting Jupyter.
+  A sandboxed server sees only its folder (plus `~/.ipynb` and the system,
+  read-only), so its URL can be shared without exposing the rest of your
+  account. It uses Linux user namespaces; nothing to install.
 - **Security:** the Jupyter token is no longer on the command line, where every
   user of the server could see it with `ps`. `~/.astrolab` and its logs, which
   contain the URLs with tokens, are now readable only by you. Restart Jupyter

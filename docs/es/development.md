@@ -22,12 +22,22 @@
 | `ui.go` | las preguntas: selector de carpetas, token, autocompletado de rutas, estilos |
 | `actions.go` | una función por opción del menú |
 | `process.go` | inicio de procesos separados, registro de instancias, puertos, logs |
+| `sandbox_linux.go` | servidores aislados (`sandbox_other.go`: el reemplazo para otros sistemas) |
 
 Las preguntas usan [huh](https://github.com/charmbracelet/huh). Los servidores
 parten en su propia sesión (`setsid`), así que sobreviven al cierre del gestor y
 de la sesión SSH. Cada instancia se guarda como JSON en `~/.astrolab/run/`; los
 archivos de texto que escribía el gestor en bash usado antes de la 1.0.0 se
 siguen leyendo, así que los servidores que dejó corriendo aparecen.
+
+Un servidor aislado funciona como [bubblewrap](https://github.com/containers/bubblewrap).
+El gestor se vuelve a iniciar a sí mismo como `astroenvs __sandbox` en nuevos
+namespaces de usuario, montajes y procesos. Ese proceso arma una raíz que solo
+contiene las carpetas del sistema y el venv (montajes bind de solo lectura) y la
+carpeta elegida, cambia a ella con `pivot_root`, descarta todas sus capabilities
+e inicia Jupyter, quedándose como PID 1. Descartar las capabilities en todos los
+hilos requiere compilar sin cgo (`CGO_ENABLED=0`); con cgo, el sandbox se niega
+a partir en vez de correr sin aislamiento.
 
 ## Compilar
 
@@ -46,6 +56,19 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
 ```
 
 Ejecuta `go vet ./...` y `gofmt -l cmd/` antes de hacer commit.
+
+## Pruebas
+
+`go test ./...` prueba el sandbox en Linux. `TestSandbox` ejecuta una shell
+dentro y revisa qué puede ver y cambiar. `TestSandboxJupyter` inicia un
+JupyterLab aislado real e intenta salir de la carpeta desde una terminal de
+Jupyter; necesita un venv con JupyterLab en `ASTROENVS_TEST_VENV`. Ambas se
+saltan donde no hay user namespaces, salvo con `ASTROENVS_SANDBOX_TEST=1`. CI
+las ejecuta en cada compilación y arma el venv con uv, igual que la instalación.
+
+```bash
+CGO_ENABLED=0 ASTROENVS_TEST_VENV=~/.ipynb go test -v ./...
+```
 
 ## Versiones
 

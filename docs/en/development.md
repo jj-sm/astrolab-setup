@@ -22,12 +22,21 @@
 | `ui.go` | the prompts: folder picker, token, path completion, styles |
 | `actions.go` | one function per menu option |
 | `process.go` | starting detached processes, tracking instances, ports, logs |
+| `sandbox_linux.go` | sandboxed servers (`sandbox_other.go`: the stub for other systems) |
 
 The prompts use [huh](https://github.com/charmbracelet/huh). Servers start in
 their own session (`setsid`), so they survive the manager and the SSH session
 ending. Each instance is saved as JSON in `~/.astrolab/run/`; the plain-text
 files written by the bash manager used before 1.0.0 are still read, so servers it
 left running show up.
+
+A sandboxed server works like [bubblewrap](https://github.com/containers/bubblewrap).
+The manager starts itself again as `astroenvs __sandbox` in new user, mount and
+PID namespaces. That process builds a root holding only the system folders and
+the venv (read-only bind mounts) and the chosen folder, pivots into it, drops
+every capability and starts Jupyter, staying behind as PID 1. Dropping
+capabilities on every thread needs a build without cgo (`CGO_ENABLED=0`); with
+cgo the sandbox refuses to start rather than run unsandboxed.
 
 ## Building
 
@@ -46,6 +55,19 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath \
 ```
 
 Run `go vet ./...` and `gofmt -l cmd/` before committing.
+
+## Tests
+
+`go test ./...` tests the sandbox on Linux. `TestSandbox` runs a shell in it and
+checks what it can see and change. `TestSandboxJupyter` starts a real sandboxed
+JupyterLab and tries to leave the folder from a Jupyter terminal; it needs a venv
+with JupyterLab in `ASTROENVS_TEST_VENV`. Both skip where user namespaces are
+unavailable, unless `ASTROENVS_SANDBOX_TEST=1`. CI runs them in every build,
+building the venv with uv like the setup does.
+
+```bash
+CGO_ENABLED=0 ASTROENVS_TEST_VENV=~/.ipynb go test -v ./...
+```
 
 ## Releases
 
