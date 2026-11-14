@@ -505,7 +505,12 @@ def sync_sidebar(args, wiki, prefix, locale, root):
     repo = clean_menu(json.loads(f.read_text(encoding="utf-8")))
     live = clean_menu(wiki.menu(page_id))
     base_text = git_file(args.sidebar_base, f) if args.sidebar_base else None
-    base = clean_menu(json.loads(base_text)) if base_text else None
+    try:
+        base = clean_menu(json.loads(base_text)) if base_text else None
+    except json.JSONDecodeError:
+        # The last published file was broken (the push that fixes it): no usable base, so the file wins
+        print(f"  ! {f} at {args.sidebar_base} isn't valid JSON; publishing the current file", file=sys.stderr)
+        base = None
     print(f"{f} -> sidebar of /{prefix}")
     if live == repo:
         print("  unchanged")
