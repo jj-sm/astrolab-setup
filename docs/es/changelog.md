@@ -1,6 +1,6 @@
 # Changelog
 
-## Sin publicar
+## 1.0.1 (2026-11-14)
 
 - Se eliminó el gestor en bash (`astroenvs.sh`). La instalación solo instala el
   binario en Go; si la descarga falla, termina todo lo demás y se detiene

@@ -6,7 +6,7 @@ Jupyter Lab, CARTA, DS9 y CASA por ti.
 
 Todo se instala en tu carpeta personal, sin `sudo`.
 
-Versión actual: 1.0.0 (ver el [changelog](changelog.md)).
+Versión actual: 1.0.1 (ver el [changelog](changelog.md)).
 
 | Página | Contenido |
 |---|---|
@@ -47,7 +47,7 @@ universidad activa para llegar a ella.
 
 ```text
 ┃ ASTROENVS MANAGER
-┃ Server 10.254.0.10 · v1.0.0
+┃ Server 10.254.0.10 · v1.0.1
 ┃ > Jupyter  · Start server
 ┃   Jupyter  · Active instances
 ┃   Jupyter  · Logs

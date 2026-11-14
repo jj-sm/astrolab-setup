@@ -6,7 +6,7 @@ CARTA, DS9 and CASA for you.
 
 Everything installs in your home folder, without `sudo`.
 
-Current version: 1.0.0 (see the [changelog](changelog.md)).
+Current version: 1.0.1 (see the [changelog](changelog.md)).
 
 | Page | Contents |
 |---|---|
@@ -46,7 +46,7 @@ reach it.
 
 ```text
 ┃ ASTROENVS MANAGER
-┃ Server 10.254.0.10 · v1.0.0
+┃ Server 10.254.0.10 · v1.0.1
 ┃ > Jupyter  · Start server
 ┃   Jupyter  · Active instances
 ┃   Jupyter  · Logs

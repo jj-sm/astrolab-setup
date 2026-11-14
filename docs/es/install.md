@@ -76,7 +76,7 @@ source ~/.bashrc
 ## 4. Comprueba que funciona
 
 ```bash
-astroenvs --version     # astroenvs v1.0.0
+astroenvs --version     # astroenvs v1.0.1
 astroenvs               # abre el menú
 ```
 
