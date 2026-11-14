@@ -116,7 +116,7 @@ jobs:
         id: cf_allow
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID || vars.CF_ZONE_ID }}
         run: |
           ip=$(curl -fsS https://www.cloudflare.com/cdn-cgi/trace | sed -n 's/^ip=//p')
           [ -n "$ip" ] || { echo "Could not determine the runner's public IP"; exit 1; }
@@ -160,9 +160,10 @@ jobs:
       - name: Publish
         env:
           # Saving pages needs a logged-in user; Wiki.js API keys can't author pages.
-          WIKI_USERNAME: ${{ secrets.WIKI_USERNAME }}
+          WIKI_USERNAME: ${{ secrets.WIKI_USERNAME || vars.WIKI_USERNAME }}
           WIKI_PASSWORD: ${{ secrets.WIKI_PASSWORD }}
-          WIKI_SITE_ID: ${{ secrets.WIKI_SITE_ID }}
+          WIKI_TFA_SECRET: ${{ secrets.WIKI_TFA_SECRET || secrets.WIKI_2FA_SECRET }}
+          WIKI_SITE_ID: ${{ secrets.WIKI_SITE_ID || vars.WIKI_SITE_ID }}
           SRC: ${{ matrix.src }}
           PREFIX: ${{ matrix.prefix }}
           TAGS: ${{ matrix.tags }}
@@ -187,7 +188,7 @@ jobs:
         if: always() && steps.cf_allow.outputs.rule_id != ''
         env:
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+          CF_ZONE_ID: ${{ secrets.CF_ZONE_ID || vars.CF_ZONE_ID }}
         run: |
           curl -sS -X DELETE "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/firewall/access_rules/rules/${{ steps.cf_allow.outputs.rule_id }}" \
             -H "Authorization: Bearer $CF_API_TOKEN" | jq '{success, errors}'
