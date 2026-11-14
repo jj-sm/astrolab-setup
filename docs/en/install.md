@@ -18,15 +18,19 @@ On the server, run:
 curl -fsSL https://raw.githubusercontent.com/jj-sm/astrolab-setup/main/install.sh | bash
 ```
 
-This does steps 1 to 3 below for you: it clones the repository into
-`~/astrolab-setup` (or updates it), asks you to choose a token, and runs the
-setup. Press Enter at the token prompt for a random one; it's printed and saved
+This does steps 1 to 3 below for you: it downloads the repository into a
+temporary folder, asks you to choose a token, runs the setup and deletes the
+folder, so nothing is left in your home folder but what the setup installs. It
+doesn't need `git`. Press Enter at the token prompt for a random one; it's printed and saved
 in `~/.astroenvs.env`. If you already set a token in an earlier install, it
-keeps that one and doesn't ask.
+keeps that one and doesn't ask, along with your other settings in
+`~/.astroenvs.env`.
 
-When it finishes, close and reopen the terminal and go to
-step 4. Running the same command again later updates
-everything.
+When it finishes, close and reopen the terminal and go to step 4. Running the
+same command again later updates everything.
+
+If you installed by hand before, you can delete `~/astrolab-setup` afterwards:
+nothing uses it once the setup has run.
 
 The rest of this page does the same by hand.
 

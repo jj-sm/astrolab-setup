@@ -25,8 +25,8 @@ On the server, run:
 curl -fsSL https://raw.githubusercontent.com/jj-sm/astrolab-setup/main/install.sh | bash
 ```
 
-It clones this repository into `~/astrolab-setup`, asks you to choose a token
-(Enter picks a random one) and runs the setup. When it finishes, close and
+It downloads this repository into a temporary folder, asks you to choose a
+token (Enter picks a random one), runs the setup and deletes the folder. When it finishes, close and
 reopen the terminal and run `astroenvs`.
 
 Choose **Jupyter · Start server**, press Enter twice and open the URL it prints
@@ -54,7 +54,7 @@ DS9 and CASA's windows need X11 forwarding: install
 | Path | Contents |
 |---|---|
 | `cmd/astroenvs/` | the manager, in Go |
-| `install.sh` | the one-command installer: clones the repo, asks for a token, runs the setup |
+| `install.sh` | the one-command installer: downloads the repo to a temporary folder, asks for a token, runs the setup |
 | `ipynb_setup.bash` | the setup script |
 | `folder.bash` | project folders (`tfold`) |
 | `docs/en/`, `docs/es/` | the documentation, published to docs.jjsm.science |

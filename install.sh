@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 # One-command install:
 #   curl -fsSL https://raw.githubusercontent.com/jj-sm/astrolab-setup/main/install.sh | bash
-# Clones (or updates) ~/astrolab-setup, asks for a token, then runs ipynb_setup.bash.
+# Downloads the repository into a temporary folder, asks for a token, runs ipynb_setup.bash
+# and deletes the folder: the setup copies everything it needs into your home folder.
 #
 # Everything is inside main, so bash has read the whole script before running anything
 # and no command can swallow the rest of it from the curl pipe.
 set -e
 
-REPO_URL="https://github.com/jj-sm/astrolab-setup.git"
-REPO_DIR="$HOME/astrolab-setup"
+# ASTROLAB_TARBALL can point somewhere else (another branch, or a file:// URL for testing)
+TARBALL_URL="${ASTROLAB_TARBALL:-https://github.com/jj-sm/astrolab-setup/archive/refs/heads/main.tar.gz}"
 
 has_token() {
     grep -q '^[[:space:]]*\(export[[:space:]]\+\)\?TOKEN=.' "$1" 2>/dev/null &&
@@ -40,36 +41,34 @@ ask_token() {
 }
 
 main() {
-    echo "=== Getting astrolab-setup into $REPO_DIR ==="
-    if [ -d "$REPO_DIR/.git" ]; then
-        git -C "$REPO_DIR" pull --ff-only
-    elif [ -e "$REPO_DIR" ]; then
-        echo "✖ $REPO_DIR exists but isn't a git clone. Move it away and run this again."
+    echo "=== Downloading astrolab-setup ==="
+    # mktemp -d makes it private (700), which matters since the token is written there
+    WORK_DIR=$(mktemp -d "${TMPDIR:-/tmp}/astrolab-setup.XXXXXX")
+    trap 'rm -rf "$WORK_DIR"' EXIT
+    # Some tars accept an empty stream, so check for the setup script rather than the exit code
+    curl -fsSL "$TARBALL_URL" | tar -xz -C "$WORK_DIR" --strip-components=1 || true
+    if [ ! -f "$WORK_DIR/ipynb_setup.bash" ]; then
+        echo "✖ Could not download $TARBALL_URL (is GitHub reachable from here?)"
         exit 1
-    else
-        git clone "$REPO_URL" "$REPO_DIR"
     fi
 
-    # Keep a token set by an earlier install; otherwise ask for one
-    local env="$REPO_DIR/.env"
-    if has_token "$env"; then
-        echo "✔ Using the token in $env"
-    elif has_token "$HOME/.astroenvs.env"; then
+    # Keep the settings of an earlier install (or of an old ~/astrolab-setup clone);
+    # otherwise ask for a token
+    local env="$WORK_DIR/.env"
+    if has_token "$HOME/.astroenvs.env"; then
         cp "$HOME/.astroenvs.env" "$env"
         echo "✔ Using the token in ~/.astroenvs.env"
+    elif has_token "$HOME/astrolab-setup/.env"; then
+        cp "$HOME/astrolab-setup/.env" "$env"
+        echo "✔ Using the token in ~/astrolab-setup/.env"
     else
         local token
         token=$(ask_token)
-        if [ -f "$env" ]; then
-            grep -v '^[[:space:]]*\(export[[:space:]]\+\)\?TOKEN=' "$env" > "$env.tmp" || true
-            mv "$env.tmp" "$env"
-        fi
-        echo "TOKEN=$token" >> "$env"
+        echo "TOKEN=$token" > "$env"
         echo "✔ Token saved (you'll find it in ~/.astroenvs.env): $token"
     fi
-    chmod 600 "$env"
 
-    bash "$REPO_DIR/ipynb_setup.bash"
+    bash "$WORK_DIR/ipynb_setup.bash"
 
     echo ""
     echo "=== All set. Close and reopen your terminal (or run 'source ~/.bashrc'), then run: astroenvs ==="

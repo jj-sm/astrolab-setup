@@ -43,12 +43,12 @@ está en otro lugar, o Jupyter no está instalado en él.
 ## "No default set" al pedir un token
 
 El gestor lee el token por defecto solo desde `~/.astroenvs.env`, no desde el
-`.env` del repositorio. La instalación copia uno al otro; si no lo hizo (por
-ejemplo, porque falló un paso anterior), cópialo tú:
+`.env` del repositorio. La instalación copia uno al otro, pero solo al llegar a
+su último paso. Vuelve a ejecutar la [instalación rápida](install.md), que pide
+un token, o agrégalo tú:
 
 ```bash
-cp ~/astrolab-setup/.env ~/.astroenvs.env && chmod 600 ~/.astroenvs.env
-grep TOKEN ~/.astroenvs.env
+echo "TOKEN=<tu-token>" >> ~/.astroenvs.env && chmod 600 ~/.astroenvs.env
 ```
 
 ## El navegador no abre la URL

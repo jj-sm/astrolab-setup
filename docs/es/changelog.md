@@ -3,7 +3,8 @@
 ## Sin publicar
 
 - Instalación con un solo comando: `curl -fsSL https://raw.githubusercontent.com/jj-sm/astrolab-setup/main/install.sh | bash`
-  clona el repositorio, pide un token y ejecuta la instalación.
+  descarga el repositorio en una carpeta temporal, pide un token, ejecuta la
+  instalación y borra la carpeta. No necesita `git`.
 - Volver a ejecutar la instalación reutiliza un `~/.ipynb` existente en vez de
   detenerse en la pregunta "already exists" de uv, y el entorno siempre se crea
   en tu carpeta personal, desde donde sea que ejecutes la instalación.
