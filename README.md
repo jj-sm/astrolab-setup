@@ -19,15 +19,15 @@ Everything goes into your home folder, without `sudo`.
 
 ## Quick start
 
-On the server, from your home folder:
+On the server, run:
 
 ```bash
-git clone https://github.com/jj-sm/astrolab-setup.git
-cp astrolab-setup/.env.example astrolab-setup/.env   # then set TOKEN=<something random>
-bash astrolab-setup/ipynb_setup.bash
-source ~/.bashrc
-astroenvs
+curl -fsSL https://raw.githubusercontent.com/jj-sm/astrolab-setup/main/install.sh | bash
 ```
+
+It clones this repository into `~/astrolab-setup`, asks you to choose a token
+(Enter picks a random one) and runs the setup. When it finishes, close and
+reopen the terminal and run `astroenvs`.
 
 Choose **Jupyter · Start server**, press Enter twice and open the URL it prints
 (with the university VPN on).
@@ -54,6 +54,7 @@ DS9 and CASA's windows need X11 forwarding: install
 | Path | Contents |
 |---|---|
 | `cmd/astroenvs/` | the manager, in Go |
+| `install.sh` | the one-command installer: clones the repo, asks for a token, runs the setup |
 | `ipynb_setup.bash` | the setup script |
 | `folder.bash` | project folders (`tfold`) |
 | `docs/en/`, `docs/es/` | the documentation, published to docs.jjsm.science |

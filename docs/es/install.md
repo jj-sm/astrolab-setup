@@ -10,6 +10,26 @@
 
 No necesitas `sudo`: todo queda en tu carpeta personal.
 
+## Instalación rápida
+
+En el servidor, ejecuta:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jj-sm/astrolab-setup/main/install.sh | bash
+```
+
+Esto hace por ti los pasos 1 a 3: clona el repositorio en `~/astrolab-setup` (o
+lo actualiza), te pide elegir un token y ejecuta la instalación. Presiona Enter
+cuando pida el token para usar uno aleatorio; se muestra en pantalla y queda
+guardado en `~/.astroenvs.env`. Si ya definiste un token en una instalación
+anterior, lo conserva y no pregunta.
+
+Cuando termine, cierra y vuelve a abrir la terminal y sigue con el
+paso 4. Ejecutar el mismo comando más adelante
+actualiza todo.
+
+El resto de esta página hace lo mismo a mano.
+
 ## 1. Descarga el repositorio
 
 Clónalo en tu carpeta personal. La instalación lee `.env` y `folder.bash` de la

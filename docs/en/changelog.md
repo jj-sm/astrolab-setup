@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- One-command install: `curl -fsSL https://raw.githubusercontent.com/jj-sm/astrolab-setup/main/install.sh | bash` clones
+  the repository, asks for a token and runs the setup.
 - Re-running the setup reuses an existing `~/.ipynb` instead of stopping at
   uv's "already exists" prompt, and the environment is always created in your
   home folder, wherever you run the setup from.

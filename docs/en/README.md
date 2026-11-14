@@ -30,15 +30,15 @@ Current version: 1.0.1 (see the [changelog](changelog.md)).
 
 ## Quick start
 
-On the server, from your home folder:
+On the server, run:
 
 ```bash
-git clone https://github.com/jj-sm/astrolab-setup.git
-cp astrolab-setup/.env.example astrolab-setup/.env   # then set TOKEN=<something random>
-bash astrolab-setup/ipynb_setup.bash
-source ~/.bashrc
-astroenvs
+curl -fsSL https://raw.githubusercontent.com/jj-sm/astrolab-setup/main/install.sh | bash
 ```
+
+Choose a token when it asks (Enter picks a random one). When it finishes, close
+and reopen the terminal, then run `astroenvs`. To do it step by step instead,
+see [Installation](install.md).
 
 Pick **Jupyter · Start server**, press Enter twice (your home folder, the
 default token) and open the URL it prints. You need the university VPN on to
